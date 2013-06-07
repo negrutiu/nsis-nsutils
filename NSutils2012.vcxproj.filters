@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{e4b0c49c-0b4a-41d2-92a1-5f90224d7fc3}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{4f8983b3-db2a-4830-937a-9079359cc52a}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{a519e34c-1517-47a5-95fc-6cf5817c00bf}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+    <Filter Include="NSIS">
+      <UniqueIdentifier>{e21b4c4c-c631-4883-9fa7-efc9712993ff}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="verinfo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="nsiswapi\pluginapi.c">
+      <Filter>NSIS</Filter>
+    </ClCompile>
+    <ClCompile Include="main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="nsiswapi\api.h">
+      <Filter>NSIS</Filter>
+    </ClInclude>
+    <ClInclude Include="nsiswapi\nsis_tchar.h">
+      <Filter>NSIS</Filter>
+    </ClInclude>
+    <ClInclude Include="nsiswapi\pluginapi.h">
+      <Filter>NSIS</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
