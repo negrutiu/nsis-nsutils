@@ -246,7 +246,7 @@ DWORD ReadFixedFileInfo(
 //  [exported] GetVersionInfoString
 //  ----------------------------------------------------------------------
 //  Example:
-//    NSVerInfo::GetVersionInfoString "$INSTDIR\Test.exe" "LegalCopyright"
+//    NSutils::GetVersionInfoString "$INSTDIR\Test.exe" "LegalCopyright"
 //    Pop $0
 //    ${If} $0 != ""
 //      ;Success: $0 contains the valid version string
@@ -309,7 +309,7 @@ void __declspec(dllexport) GetVersionInfoString(
 //  [exported] GetFileVersion
 //  ----------------------------------------------------------------------
 //  Example:
-//    NSVerInfo::GetFileVersion "$SYSDIR\Notepad.exe"
+//    NSutils::GetFileVersion "$SYSDIR\Notepad.exe"
 //    Pop $0
 //    ${If} $0 != ""
 //      ; Success:
@@ -386,7 +386,7 @@ void __declspec(dllexport) GetFileVersion(
 //  [exported] GetProductVersion
 //  ----------------------------------------------------------------------
 //  Example:
-//    NSVerInfo::GetFileVersion "$SYSDIR\Notepad.exe"
+//    NSutils::GetFileVersion "$SYSDIR\Notepad.exe"
 //    Pop $0
 //    ${If} $0 != ""
 //      ; Success:
