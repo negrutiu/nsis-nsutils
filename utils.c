@@ -84,7 +84,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 #define REGKEY_PENDING_FILE_OPS	_T("SYSTEM\\CurrentControlSet\\Control\\Session Manager")
 #define REGVAL_PENDING_FILE_OPS _T("PendingFileRenameOperations")
 
-	DWORD err = ERROR_SUCCESS, err2;
+	DWORD err = ERROR_SUCCESS, err2, err3;
 	HKEY hKey;
 	BYTE iMajorVersion = LOBYTE(LOWORD(GetVersion()));
 	BYTE iMinorVersion = HIBYTE(LOWORD(GetVersion()));
@@ -130,38 +130,58 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 
 								// At this point we have both, SrcFile and DstFile
 								// We'll execute the pended operation if SrcFile matches our search criteria
-
+								
 								if ( pszValue[iIndexSrcFile] &&
 									( !pszSrcFileSubstr || !*pszSrcFileSubstr || StrStrI( pszValue + iIndexSrcFile, pszSrcFileSubstr ))
 									)
 								{
+									/// Ignore "\??\" prefix
+									LPCTSTR pszSrcFile = pszValue + iIndexSrcFile;
+									if ( StrCmpN( pszSrcFile, _T("\\??\\"), 4 ) == 0 )
+										pszSrcFile += 4;
+
 									if ( !pszValue[iIndexDstFile] ) {
 
 										// Delete SrcFile
-										if ( !DeleteFile( pszValue + iIndexSrcFile )) {
-											err2 = GetLastError();
+										err3 = ERROR_SUCCESS;
+										if ( !DeleteFile( pszSrcFile )) {
+											err3 = err2 = GetLastError();
 											if ((err2 == ERROR_FILE_NOT_FOUND) || (err2 == ERROR_INVALID_NAME) || (err2 == ERROR_PATH_NOT_FOUND) || (err2 == ERROR_INVALID_DRIVE))
 												err2 = ERROR_SUCCESS;	/// Forget errors for files that don't exist
 											if ( pdwFileOpError && ( *pdwFileOpError == ERROR_SUCCESS ))	/// Only the first encountered error is remembered
 												*pdwFileOpError = err2;
 										}
 
-										///Log( sz, ARRAYSIZE(sz), _T("Delete( %s )\n"), pszValue + iIndexSrcFile );
+										/*{
+											TCHAR sz[512];
+											wsprintf( sz, _T("Delete( \"%s\" ) == 0x%x\n"), pszSrcFile, err3 );
+											OutputDebugString( sz );
+										}*/
 
 									} else {
 
-										if ( pszValue[iIndexDstFile] == _T('!'))
-											iIndexDstFile++;
+										/// Ignore "!" and "\??\" prefixes
+										LPCTSTR pszDstFile = pszValue + iIndexDstFile;
+										if ( *pszDstFile == _T('!'))
+											pszDstFile++;
+										if ( StrCmpN( pszDstFile, _T("\\??\\"), 4 ) == 0 )
+											pszDstFile += 4;
 
 										// Rename SrcFile -> DstFile
-										if ( !MoveFileEx( pszValue + iIndexSrcFile, pszValue + iIndexDstFile, MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED ))
-											err2 = GetLastError();
-										if ((err2 == ERROR_FILE_NOT_FOUND) || (err2 == ERROR_INVALID_NAME) || (err2 == ERROR_PATH_NOT_FOUND) || (err2 == ERROR_INVALID_DRIVE))
-											err2 = ERROR_SUCCESS;	/// Forget errors for files that don't exist
-										if ( pdwFileOpError && ( *pdwFileOpError == ERROR_SUCCESS ))	/// Only the first encountered error is remembered
-											*pdwFileOpError = err2;
+										err3 = ERROR_SUCCESS;
+										if ( !MoveFileEx( pszSrcFile, pszDstFile, MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED )) {
+											err3 = err2 = GetLastError();
+											if ((err2 == ERROR_FILE_NOT_FOUND) || (err2 == ERROR_INVALID_NAME) || (err2 == ERROR_PATH_NOT_FOUND) || (err2 == ERROR_INVALID_DRIVE))
+												err2 = ERROR_SUCCESS;	/// Forget errors for files that don't exist
+											if ( pdwFileOpError && ( *pdwFileOpError == ERROR_SUCCESS ))	/// Only the first encountered error is remembered
+												*pdwFileOpError = err2;
+										}
 
-										///Log( sz, ARRAYSIZE(sz), _T("Rename( %s -> %s )\n"), pszValue + iIndexSrcFile, pszValue + iIndexDstFile );
+										/*{
+											TCHAR sz[512];
+											wsprintf( sz, _T("Rename( \"%s\", \"%s\" ) == 0x%x\n"), pszSrcFile, pszDstFile, err3 );
+											OutputDebugString( sz );
+										}*/
 									}
 
 									// Remove the current pended operation from memory
