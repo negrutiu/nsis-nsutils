@@ -1,6 +1,37 @@
 #include <windows.h>
+#include <CommCtrl.h>
 #include <Shlwapi.h>
 #include "nsiswapi\pluginapi.h"
+
+
+//++ IsWow64
+BOOL IsWow64()
+{
+	BOOL bIsWow64 = FALSE;
+
+	typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+	LPFN_ISWOW64PROCESS fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress( GetModuleHandle( _T("kernel32")), "IsWow64Process" );
+
+	if ( fnIsWow64Process && fnIsWow64Process( GetCurrentProcess(), &bIsWow64 ))
+		return bIsWow64;
+
+	return FALSE;
+}
+
+//++ EnableWow64FsRedirection
+BOOLEAN EnableWow64FsRedirection( __in BOOLEAN bEnable )
+{
+	BOOL bRet = FALSE;
+
+	typedef BOOLEAN (WINAPI *LPFN_WOW64EW64FSR)(BOOLEAN);
+	LPFN_WOW64EW64FSR fnEnableFsRedir = (LPFN_WOW64EW64FSR)GetProcAddress( GetModuleHandle( _T("kernel32")), "Wow64EnableWow64FsRedirection" );
+
+	if ( fnEnableFsRedir )
+		bRet = fnEnableFsRedir( bEnable );
+
+	return bRet;
+}
+
 
 /***
 *memmove - Copy source buffer to destination buffer
@@ -89,6 +120,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 	BYTE iMajorVersion = LOBYTE(LOWORD(GetVersion()));
 	BYTE iMinorVersion = HIBYTE(LOWORD(GetVersion()));
 	DWORD dwKeyFlags = 0;
+	BOOLEAN bDisabledFSRedirection = FALSE;
 
 	if ( iMajorVersion > 5 || ( iMajorVersion == 5 && iMinorVersion >= 1 ))		/// XP or newer
 		dwKeyFlags |= KEY_WOW64_64KEY;
@@ -139,6 +171,10 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 									LPCTSTR pszSrcFile = pszValue + iIndexSrcFile;
 									if ( StrCmpN( pszSrcFile, _T("\\??\\"), 4 ) == 0 )
 										pszSrcFile += 4;
+
+									/// Disable file system redirection (Vista+)
+									if ( !bDisabledFSRedirection && IsWow64())
+										bDisabledFSRedirection = EnableWow64FsRedirection( FALSE );
 
 									if ( !pszValue[iIndexDstFile] ) {
 
@@ -223,6 +259,10 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 		RegCloseKey( hKey );
 	}
 
+	/// Re-enable file system redirection (Vista+)
+	if ( bDisabledFSRedirection )
+		EnableWow64FsRedirection( TRUE );
+
 	return err;
 }
 
@@ -280,4 +320,136 @@ void __declspec(dllexport) ExecutePendingFileRenameOperations(
 		/// Free memory
 		GlobalFree( pszBuf );
 	}
+}
+
+
+#define PROP_OLD_WINDOWPROC  _T("NSutils.Old.WndProc")
+
+//++ LockProgressBarWndProc
+LRESULT CALLBACK LockProgressBarWndProc(
+	__in HWND hWnd,
+	__in UINT iMsg,
+	__in WPARAM wParam,
+	__in LPARAM lParam
+	)
+{
+	WNDPROC fnOriginalWndProc = (WNDPROC)GetProp( hWnd, PROP_OLD_WINDOWPROC );
+
+	switch ( iMsg )
+	{
+		case PBM_SETPOS:
+			{
+				int iNewPos = (int)wParam;
+				int iCurPos = (int)SendMessage( hWnd, PBM_GETPOS, 0, 0 );
+
+				// We don't allow the progress bar to go backwards
+				if ( iNewPos <= iCurPos )
+					return iCurPos;
+
+				break;
+			}
+	}
+
+	// Call the original WndProc
+	if ( fnOriginalWndProc ) {
+		return CallWindowProc( fnOriginalWndProc, hWnd, iMsg, wParam, lParam );
+	} else {
+		return DefWindowProc( hWnd, iMsg, wParam, lParam );
+	}
+}
+
+
+//++ LockProgressBarImpl
+VOID LockProgressBarImpl(
+	__in HWND hProgressBar,
+	__in BOOLEAN bLock			/// lock/unlock
+	)
+{
+	// Valid window?
+	if ( hProgressBar && IsWindow( hProgressBar )) {
+
+		if ( bLock ) {
+			// Hook progress bar's WndProc
+			if ( GetProp( hProgressBar, PROP_OLD_WINDOWPROC ) == NULL ) {	/// Already hooked?
+				WNDPROC fnOldWndProc = (WNDPROC)SetWindowLongPtr( hProgressBar, GWLP_WNDPROC, (LONG_PTR)LockProgressBarWndProc );
+				if ( fnOldWndProc )
+					SetProp( hProgressBar, PROP_OLD_WINDOWPROC, (HANDLE)fnOldWndProc );
+			}
+		} else {
+			// Unhook the progress bar
+			WNDPROC fnOldWndProc = (WNDPROC)GetProp( hProgressBar, PROP_OLD_WINDOWPROC );
+			if ( fnOldWndProc ) {
+				SetWindowLongPtr( hProgressBar, GWLP_WNDPROC, (LONG_PTR)fnOldWndProc );
+				RemoveProp( hProgressBar, PROP_OLD_WINDOWPROC );
+			}
+		}
+	}
+}
+
+
+//
+//  [exported] LockProgressBar
+//  ----------------------------------------------------------------------
+//  Input:  Progress bar window handle
+//  Output: None
+//
+//  Example:
+//    NSutils::LockProgressBar /NOUNLOAD $mui.InstFilesPage.ProgressBar
+//    /NOUNLOAD is mandatory for obvious reasons...
+void __declspec(dllexport) LockProgressBar(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	LPTSTR pszBuf = NULL;
+
+	//	Cache global structures
+	EXDLL_INIT();
+
+	//	Check NSIS API compatibility
+	if ( !IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+	///	Param1: Progress bar handle
+	LockProgressBarImpl( (HWND)popint(), TRUE );
+}
+
+
+//
+//  [exported] UnlockProgressBar
+//  ----------------------------------------------------------------------
+//  Input:  Progress bar window handle
+//  Output: None
+//
+//  Example:
+//    NSutils::UnlockProgressBar /NOUNLOAD $mui.InstFilesPage.ProgressBar
+//
+void __declspec(dllexport) UnlockProgressBar(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	LPTSTR pszBuf = NULL;
+
+	//	Cache global structures
+	EXDLL_INIT();
+
+	//	Check NSIS API compatibility
+	if ( !IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+	///	Param1: Progress bar handle
+	LockProgressBarImpl( (HWND)popint(), FALSE );
 }
