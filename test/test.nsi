@@ -1,6 +1,8 @@
 
-!ifdef UNICODE
-	Unicode true
+!ifdef ANSI
+	Unicode false
+!else
+	Unicode true	; Default
 !endif
 
 !include "MUI2.nsh"
