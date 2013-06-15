@@ -162,7 +162,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 
 								// At this point we have both, SrcFile and DstFile
 								// We'll execute the pended operation if SrcFile matches our search criteria
-								
+
 								if ( pszValue[iIndexSrcFile] &&
 									( !pszSrcFileSubstr || !*pszSrcFileSubstr || StrStrI( pszValue + iIndexSrcFile, pszSrcFileSubstr ))
 									)
@@ -325,8 +325,8 @@ void __declspec(dllexport) ExecutePendingFileRenameOperations(
 
 #define PROP_OLD_WINDOWPROC  _T("NSutils.Old.WndProc")
 
-//++ LockProgressBarWndProc
-LRESULT CALLBACK LockProgressBarWndProc(
+//++ ProgressBarWndProc
+LRESULT CALLBACK ProgressBarWndProc(
 	__in HWND hWnd,
 	__in UINT iMsg,
 	__in WPARAM wParam,
@@ -342,7 +342,7 @@ LRESULT CALLBACK LockProgressBarWndProc(
 				int iNewPos = (int)wParam;
 				int iCurPos = (int)SendMessage( hWnd, PBM_GETPOS, 0, 0 );
 
-				// We don't allow the progress bar to go backwards
+				// We don't allow the progress bar to go backward
 				if ( iNewPos <= iCurPos )
 					return iCurPos;
 
@@ -359,19 +359,19 @@ LRESULT CALLBACK LockProgressBarWndProc(
 }
 
 
-//++ LockProgressBarImpl
-VOID LockProgressBarImpl(
+//++ ProgressStepBack
+VOID ProgressStepBack(
 	__in HWND hProgressBar,
-	__in BOOLEAN bLock			/// lock/unlock
+	__in BOOLEAN bNoStepBack
 	)
 {
 	// Valid window?
 	if ( hProgressBar && IsWindow( hProgressBar )) {
 
-		if ( bLock ) {
+		if ( bNoStepBack ) {
 			// Hook progress bar's WndProc
 			if ( GetProp( hProgressBar, PROP_OLD_WINDOWPROC ) == NULL ) {	/// Already hooked?
-				WNDPROC fnOldWndProc = (WNDPROC)SetWindowLongPtr( hProgressBar, GWLP_WNDPROC, (LONG_PTR)LockProgressBarWndProc );
+				WNDPROC fnOldWndProc = (WNDPROC)SetWindowLongPtr( hProgressBar, GWLP_WNDPROC, (LONG_PTR)ProgressBarWndProc );
 				if ( fnOldWndProc )
 					SetProp( hProgressBar, PROP_OLD_WINDOWPROC, (HANDLE)fnOldWndProc );
 			}
@@ -388,15 +388,15 @@ VOID LockProgressBarImpl(
 
 
 //
-//  [exported] LockProgressBar
+//  [exported] DisableProgressStepBack
 //  ----------------------------------------------------------------------
 //  Input:  Progress bar window handle
 //  Output: None
 //
 //  Example:
-//    NSutils::LockProgressBar /NOUNLOAD $mui.InstFilesPage.ProgressBar
+//    NSutils::DisableProgressStepBack /NOUNLOAD $mui.InstFilesPage.ProgressBar
 //    /NOUNLOAD is mandatory for obvious reasons...
-void __declspec(dllexport) LockProgressBar(
+void __declspec(dllexport) DisableProgressStepBack(
 	HWND hWndParent,
 	int string_size,
 	TCHAR *variables,
@@ -417,20 +417,20 @@ void __declspec(dllexport) LockProgressBar(
 
 	//	Retrieve NSIS parameters
 	///	Param1: Progress bar handle
-	LockProgressBarImpl( (HWND)popint(), TRUE );
+	ProgressStepBack((HWND)popint(), TRUE );
 }
 
 
 //
-//  [exported] UnlockProgressBar
+//  [exported] RestoreProgressStepBack
 //  ----------------------------------------------------------------------
 //  Input:  Progress bar window handle
 //  Output: None
 //
 //  Example:
-//    NSutils::UnlockProgressBar /NOUNLOAD $mui.InstFilesPage.ProgressBar
+//    NSutils::RestoreProgressStepBack /NOUNLOAD $mui.InstFilesPage.ProgressBar
 //
-void __declspec(dllexport) UnlockProgressBar(
+void __declspec(dllexport) RestoreProgressStepBack(
 	HWND hWndParent,
 	int string_size,
 	TCHAR *variables,
@@ -451,5 +451,5 @@ void __declspec(dllexport) UnlockProgressBar(
 
 	//	Retrieve NSIS parameters
 	///	Param1: Progress bar handle
-	LockProgressBarImpl( (HWND)popint(), FALSE );
+	ProgressStepBack((HWND)popint(), FALSE );
 }
