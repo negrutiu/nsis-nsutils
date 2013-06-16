@@ -343,7 +343,8 @@ LRESULT CALLBACK ProgressBarWndProc(
 				int iCurPos = (int)SendMessage( hWnd, PBM_GETPOS, 0, 0 );
 
 				// We don't allow the progress bar to go backward
-				if ( iNewPos <= iCurPos )
+				// ...except when set to zero
+				if (( iNewPos <= iCurPos ) && ( iNewPos > 0 ))
 					return iCurPos;
 
 				break;
