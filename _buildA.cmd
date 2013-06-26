@@ -27,7 +27,7 @@ if not exist "%~dp0\%OUTDIR%\temp" mkdir "%~dp0\%OUTDIR%\temp"
 
 set CL=/nologo /O1 /Ob2 /Os /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL" /D "_MBCS" /GF /FD /MT /LD /GS- /Fo".\%OUTDIR%\temp\\" /Fd".\%OUTDIR%\temp\\" /Fe".\%OUTDIR%\%OUTNAME%" /W3
 set LINK=/INCREMENTAL:NO /MANIFEST:NO /NODEFAULTLIB /ENTRY:"DllMain" kernel32.lib user32.lib version.lib advapi32.lib shlwapi.lib
-cl.exe "main.c" "verinfo.c" "utils.c" "nsiswapi\pluginapi.c" && set BUILD_SUCCESSFUL=1
+cl.exe "main.c" "verinfo.c" "utils.c" "strblock.c" "nsiswapi\pluginapi.c" && set BUILD_SUCCESSFUL=1
 
 if %BUILD_SUCCESSFUL%==1 (
 	echo Success!

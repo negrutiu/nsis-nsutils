@@ -231,6 +231,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.c" />
+    <ClCompile Include="strblock.c" />
     <ClCompile Include="utils.c" />
     <ClCompile Include="verinfo.c" />
     <ClCompile Include="nsiswapi\pluginapi.c" />
@@ -239,6 +240,10 @@
     <ClInclude Include="nsiswapi\api.h" />
     <ClInclude Include="nsiswapi\nsis_tchar.h" />
     <ClInclude Include="nsiswapi\pluginapi.h" />
+    <ClInclude Include="strblock.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="NSutils.Readme.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

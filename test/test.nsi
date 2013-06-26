@@ -1,4 +1,4 @@
-
+﻿
 !ifdef ANSI
 	Unicode false
 !else
@@ -40,6 +40,13 @@ RequestExecutionLevel user ; don't require UAC elevation
 ShowInstDetails show
 
 !define Print DetailPrint
+
+!ifndef TRUE
+	!define TRUE 1
+!endif
+!ifndef FALSE
+	!define FALSE 0
+!endif
 
 Function .onInit
 
@@ -216,6 +223,61 @@ Section /o "Test PendingFileRenameOperations (requires Admin)"
 	Delete "$DESKTOP\MyNotepad2.exe"
 
 SectionEnd
+
+
+Section /o "Test string table manipulation"
+
+	${Print} "--------------------------------------------------------------"
+
+	System::Call 'kernel32::CopyFile( t "$EXEPATH", t "$DESKTOP\MyTest.exe", i 0 ) i.r0'
+	${Print} 'CopyFile( "$EXEPATH", "DESKTOP\MyTest.exe" ) == $0'
+
+	NSutils::ReadResourceString /NOUNLOAD "$DESKTOP\MyUser32.dll" 100 1033
+	Pop $0
+	${If} $0 == ""
+		${Print} 'String #10: "$0". Ok!'
+	${Else}
+		${Print} 'String #10: "$0". Should have been empty!'
+	${EndIf}
+
+	NSutils::WriteResourceString /NOUNLOAD "$DESKTOP\MyTest.exe" 100 1033 "Dela beat cârciumă vin / Merg pe gard, de drum mă țin"
+	Pop $0
+	${If} $0 = ${FALSE}
+		StrCpy $0 "ERROR"
+	${Else}
+		StrCpy $0 "SUCCESS"
+	${EndIf}
+	${Print} 'Write #100: $0'
+
+	NSutils::ReadResourceString /NOUNLOAD "$DESKTOP\MyTest.exe" 100 1033
+	Pop $0
+	${If} $0 != ""
+		${Print} 'String #100: "$0". Ok!'
+	${Else}
+		${Print} 'String #100: "". Should have been valid!'
+	${EndIf}
+
+	NSutils::WriteResourceString /NOUNLOAD "$DESKTOP\MyTest.exe" 100 1033 ""
+	Pop $0
+	${If} $0 = ${FALSE}
+		StrCpy $0 "ERROR"
+	${Else}
+		StrCpy $0 "SUCCESS"
+	${EndIf}
+	${Print} 'Delete #100: $0'
+
+	NSutils::ReadResourceString /NOUNLOAD "$DESKTOP\MyTest.exe" 100 1033
+	Pop $0
+	${If} $0 == ""
+		${Print} 'String #10: "$0". Ok!'
+	${Else}
+		${Print} 'String #10: "$0". Should have been empty!'
+	${EndIf}
+
+	Delete "$DESKTOP\MyTest.exe"
+
+SectionEnd
+
 
 Section "-Cleanup"
 	; Make sure NSutils is not loaded (in case all previous calls were made with /NOUNLOAD)

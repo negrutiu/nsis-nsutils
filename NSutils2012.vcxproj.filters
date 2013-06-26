@@ -30,6 +30,9 @@
     <ClCompile Include="utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="strblock.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nsiswapi\api.h">
@@ -41,5 +44,11 @@
     <ClInclude Include="nsiswapi\pluginapi.h">
       <Filter>NSIS</Filter>
     </ClInclude>
+    <ClInclude Include="strblock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="NSutils.Readme.txt" />
   </ItemGroup>
 </Project>
