@@ -230,6 +230,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="gdi.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="strblock.c" />
     <ClCompile Include="utils.c" />

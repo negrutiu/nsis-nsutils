@@ -224,3 +224,28 @@ Example:
 	...
 	GetFunctionAddress $0 OnMyTimer
 	NSutils::StopTimer /NOUNLOAD $0
+_______________________________________________________________________________
+
+[LoadImageFile]
+Loads an image in memory (HBITMAP).
+The source can be either a local file, or a web file (http, https, ftp, whatever else IE supports...)
+Supported formats: bmp, jpg, png, ico, gif, etc..
+
+You have to specify the HBITMAP dimensions. The original image will be fitted
+within these boundaries according to alignment flags.
+AlignH can be "left", "right" or "center"
+AlignV can be "top", "bottom" or "center"
+
+[!] When no longer needed you must destroy de HBITMAP by calling user32!DeleteObject
+
+Syntax:
+	NSutils::LoadImageFile [/NOUNLOAD] ImageFile|URL Width Height AlignH AlighV
+
+Return values:
+	An HBITMAP on the stack
+
+Example:
+	NSutils::LoadImageFile "http://www.codeproject.com/App_Themes/CodeProject/Img/logo250x135.gif" 640 480 center center
+	Pop $0	; HBITMAP
+	...
+	System::Call 'user32::DeleteObject( i $0 )'
