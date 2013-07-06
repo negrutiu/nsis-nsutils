@@ -33,6 +33,72 @@ BOOLEAN EnableWow64FsRedirection( __in BOOLEAN bEnable )
 }
 
 
+//++ Subclassing definitions
+#define PROP_WNDPROC_OLD				_T("NSutils.WndProc.Old")
+#define PROP_WNDPROC_REFCOUNT			_T("NSutils.WndProc.RefCount")
+#define PROP_PROGRESSBAR_NOSTEPBACK		_T("NSutils.ProgressBar.NoStepBack")
+#define PROP_PROGRESSBAR_REDIRECTWND	_T("NSutils.ProgressBar.RedirectWnd")
+
+//++ MySubclassWindow
+INT_PTR MySubclassWindow(
+	__in HWND hWnd,
+	__in WNDPROC fnWndProc
+	)
+{
+	INT_PTR iRefCount = 0;
+
+	BOOLEAN bSubclassed = FALSE;
+	if ( GetProp( hWnd, PROP_WNDPROC_OLD )) {
+		/// Already subclassed
+		bSubclassed = TRUE;
+	} else {
+		/// Subclass now
+		WNDPROC fnOldWndProc = (WNDPROC)SetWindowLongPtr( hWnd, GWLP_WNDPROC, (LONG_PTR)fnWndProc );
+		if ( fnOldWndProc ) {
+			SetProp( hWnd, PROP_WNDPROC_OLD, (HANDLE)fnOldWndProc );
+			bSubclassed = TRUE;
+		}
+	}
+
+	// Update the reference count
+	if ( bSubclassed ) {
+		iRefCount = (INT_PTR)GetProp( hWnd, PROP_WNDPROC_REFCOUNT );
+		iRefCount++;
+		SetProp( hWnd, PROP_WNDPROC_REFCOUNT, (HANDLE)iRefCount );
+	}
+
+	return iRefCount;
+}
+
+
+//++ MyUnsubclassWindow
+INT_PTR MyUnsubclassWindow(
+	__in HWND hWnd
+	)
+{
+	INT_PTR iRefCount = 0;
+
+	WNDPROC fnOldWndProc = (WNDPROC)GetProp( hWnd, PROP_WNDPROC_OLD );
+	if ( fnOldWndProc ) {
+
+		// Unsubclass the window if there are no other active timers (check the refcount)
+		iRefCount = (INT_PTR)GetProp( hWnd, PROP_WNDPROC_REFCOUNT );
+		iRefCount--;
+		if ( iRefCount <= 0 ) {
+			/// Unsubclass the window
+			SetWindowLongPtr( hWnd, GWLP_WNDPROC, (LONG_PTR)fnOldWndProc );
+			RemoveProp( hWnd, PROP_WNDPROC_OLD );
+			RemoveProp( hWnd, PROP_WNDPROC_REFCOUNT );
+		} else {
+			/// Decrement the refcount
+			SetProp( hWnd, PROP_WNDPROC_REFCOUNT, (HANDLE)iRefCount );
+		}
+	}
+
+	return iRefCount;
+}
+
+
 /***
 *memmove - Copy source buffer to destination buffer
 *
@@ -323,8 +389,6 @@ void __declspec(dllexport) ExecutePendingFileRenameOperations(
 }
 
 
-#define PROP_OLD_WINDOWPROC  _T("NSutils.Old.WndProc")
-
 //++ ProgressBarWndProc
 LRESULT CALLBACK ProgressBarWndProc(
 	__in HWND hWnd,
@@ -333,20 +397,57 @@ LRESULT CALLBACK ProgressBarWndProc(
 	__in LPARAM lParam
 	)
 {
-	WNDPROC fnOriginalWndProc = (WNDPROC)GetProp( hWnd, PROP_OLD_WINDOWPROC );
+	WNDPROC fnOriginalWndProc = (WNDPROC)GetProp( hWnd, PROP_WNDPROC_OLD );
 
 	switch ( iMsg )
 	{
 		case PBM_SETPOS:
 			{
-				int iNewPos = (int)wParam;
-				int iCurPos = (int)SendMessage( hWnd, PBM_GETPOS, 0, 0 );
+				// Prevent stepping back?
+				if ( GetProp( hWnd, PROP_PROGRESSBAR_NOSTEPBACK ) == (HANDLE)TRUE )
+				{
+					int iNewPos = (int)wParam;
+					int iCurPos = (int)SendMessage( hWnd, PBM_GETPOS, 0, 0 );
 
-				// We don't allow the progress bar to go backward
-				// ...except when set to zero
-				if (( iNewPos <= iCurPos ) && ( iNewPos > 0 ))
-					return iCurPos;
+					// We don't allow the progress bar to go backward
+					// ...except when set to zero
+					if (( iNewPos <= iCurPos ) && ( iNewPos > 0 )) {
+						return iCurPos;
+					}
+				}
 
+				// Redirect the message to the second progress bar, if set
+				if ( TRUE ) {
+					HWND hProgressBar2 = (HWND)GetProp( hWnd, PROP_PROGRESSBAR_REDIRECTWND );
+					if ( hProgressBar2 )
+						SendMessage( hProgressBar2, iMsg, wParam, lParam );
+				}
+				break;
+			}
+
+		case PBM_SETRANGE:
+		case PBM_DELTAPOS:
+		case PBM_SETSTEP:
+		case PBM_STEPIT:
+		case PBM_SETRANGE32:
+		case PBM_SETBARCOLOR:
+		case PBM_SETBKCOLOR:
+		case PBM_SETMARQUEE:
+		case PBM_SETSTATE:
+			{
+				// Redirect the message to the second progress bar, if set
+				HWND hProgressBar2 = (HWND)GetProp( hWnd, PROP_PROGRESSBAR_REDIRECTWND );
+				if ( hProgressBar2 )
+					SendMessage( hProgressBar2, iMsg, wParam, lParam );
+				break;
+			}
+
+		case WM_DESTROY:
+			{
+				// Unsubclass this window. Should have been done by the caller...
+				while ( MyUnsubclassWindow( hWnd ) > 0 );
+				RemoveProp( hWnd, PROP_PROGRESSBAR_NOSTEPBACK );
+				RemoveProp( hWnd, PROP_PROGRESSBAR_REDIRECTWND );
 				break;
 			}
 	}
@@ -356,34 +457,6 @@ LRESULT CALLBACK ProgressBarWndProc(
 		return CallWindowProc( fnOriginalWndProc, hWnd, iMsg, wParam, lParam );
 	} else {
 		return DefWindowProc( hWnd, iMsg, wParam, lParam );
-	}
-}
-
-
-//++ ProgressStepBack
-VOID ProgressStepBack(
-	__in HWND hProgressBar,
-	__in BOOLEAN bNoStepBack
-	)
-{
-	// Valid window?
-	if ( hProgressBar && IsWindow( hProgressBar )) {
-
-		if ( bNoStepBack ) {
-			// Hook progress bar's WndProc
-			if ( GetProp( hProgressBar, PROP_OLD_WINDOWPROC ) == NULL ) {	/// Already hooked?
-				WNDPROC fnOldWndProc = (WNDPROC)SetWindowLongPtr( hProgressBar, GWLP_WNDPROC, (LONG_PTR)ProgressBarWndProc );
-				if ( fnOldWndProc )
-					SetProp( hProgressBar, PROP_OLD_WINDOWPROC, (HANDLE)fnOldWndProc );
-			}
-		} else {
-			// Unhook the progress bar
-			WNDPROC fnOldWndProc = (WNDPROC)GetProp( hProgressBar, PROP_OLD_WINDOWPROC );
-			if ( fnOldWndProc ) {
-				SetWindowLongPtr( hProgressBar, GWLP_WNDPROC, (LONG_PTR)fnOldWndProc );
-				RemoveProp( hProgressBar, PROP_OLD_WINDOWPROC );
-			}
-		}
 	}
 }
 
@@ -405,7 +478,7 @@ void __declspec(dllexport) DisableProgressStepBack(
 	extra_parameters *extra
 	)
 {
-	LPTSTR pszBuf = NULL;
+	HWND hProgressBar;
 
 	//	Cache global structures
 	EXDLL_INIT();
@@ -418,7 +491,15 @@ void __declspec(dllexport) DisableProgressStepBack(
 
 	//	Retrieve NSIS parameters
 	///	Param1: Progress bar handle
-	ProgressStepBack((HWND)popint(), TRUE );
+	hProgressBar = (HWND)popint();
+	if ( hProgressBar && IsWindow( hProgressBar )) {
+
+		if ( GetProp( hProgressBar, PROP_PROGRESSBAR_NOSTEPBACK ) == NULL ) {	/// Already set?
+			if ( MySubclassWindow( hProgressBar, ProgressBarWndProc ) > 0 ) {
+				SetProp( hProgressBar, PROP_PROGRESSBAR_NOSTEPBACK, (HANDLE)TRUE );
+			}
+		}
+	}
 }
 
 
@@ -439,7 +520,7 @@ void __declspec(dllexport) RestoreProgressStepBack(
 	extra_parameters *extra
 	)
 {
-	LPTSTR pszBuf = NULL;
+	HWND hProgressBar;
 
 	//	Cache global structures
 	EXDLL_INIT();
@@ -452,5 +533,221 @@ void __declspec(dllexport) RestoreProgressStepBack(
 
 	//	Retrieve NSIS parameters
 	///	Param1: Progress bar handle
-	ProgressStepBack((HWND)popint(), FALSE );
+	hProgressBar = (HWND)popint();
+	if ( hProgressBar && IsWindow( hProgressBar )) {
+
+		if ( GetProp( hProgressBar, PROP_PROGRESSBAR_NOSTEPBACK ) != NULL ) {	/// Ever set?
+			RemoveProp( hProgressBar, PROP_PROGRESSBAR_NOSTEPBACK );
+			MyUnsubclassWindow( hProgressBar );
+		}
+	}
+}
+
+
+//
+//  [exported] RedirectProgressBar
+//  ----------------------------------------------------------------------
+//  Input:  ProgressBarWnd SecondProgressBarWnd
+//  Output: None
+//
+//  Example:
+//    NSutils::RedirectProgressBar /NOUNLOAD $mui.InstFilesPage.ProgressBar $mui.MyProgressBar
+//
+void __declspec(dllexport) RedirectProgressBar(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	HWND hProgressBar, hProgressBar2;
+
+	//	Cache global structures
+	EXDLL_INIT();
+
+	//	Check NSIS API compatibility
+	if ( !IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+
+	///	Param1: Progress bar handle
+	hProgressBar = (HWND)popint();
+
+	///	Param2: Second progress bar handle. If NULL, the redirection is canceled
+	hProgressBar2 = (HWND)popint();
+
+	if ( hProgressBar && IsWindow( hProgressBar )) {
+
+		if ( hProgressBar2 ) {
+
+			// Activate progress bar message redirection
+			if ( GetProp( hProgressBar, PROP_PROGRESSBAR_REDIRECTWND ) == NULL ) {
+				/// New redirection
+				if ( MySubclassWindow( hProgressBar, ProgressBarWndProc ) > 1 ) {
+					SetProp( hProgressBar, PROP_PROGRESSBAR_REDIRECTWND, hProgressBar2 );
+				}
+			} else {
+				/// Update existing redirection
+				SetProp( hProgressBar, PROP_PROGRESSBAR_REDIRECTWND, hProgressBar2 );
+			}
+
+			// Clone the characteristics of the first progress bar to the second one
+			SetWindowLongPtr( hProgressBar2, GWL_STYLE, GetWindowLongPtr( hProgressBar, GWL_STYLE ));
+			SetWindowLongPtr( hProgressBar2, GWL_EXSTYLE, GetWindowLongPtr( hProgressBar, GWL_EXSTYLE ));
+			SendMessage(
+				hProgressBar2,
+				PBM_SETRANGE32,
+				SendMessage( hProgressBar, PBM_GETRANGE, TRUE, 0 ),		/// Low limit
+				SendMessage( hProgressBar, PBM_GETRANGE, FALSE, 0 )		/// High limit
+				);
+
+		} else {
+
+			// Cancel progress bar message redirection
+			if ( GetProp( hProgressBar, PROP_PROGRESSBAR_REDIRECTWND ) != NULL ) {
+				RemoveProp( hProgressBar, PROP_PROGRESSBAR_REDIRECTWND );
+				MyUnsubclassWindow( hProgressBar );
+			}
+		}
+	}
+}
+
+
+//++ MainWndProc
+LRESULT CALLBACK MainWndProc(
+	__in HWND hWnd,
+	__in UINT iMsg,
+	__in WPARAM wParam,
+	__in LPARAM lParam
+	)
+{
+	WNDPROC fnOriginalWndProc = (WNDPROC)GetProp( hWnd, PROP_WNDPROC_OLD );
+
+	switch ( iMsg )
+	{
+	case WM_TIMER:
+		{
+			// The NSIS callback is also used as timer ID
+			int iNsisCallback = (int)wParam;
+
+			// Call the NSIS callback
+			g_ep->ExecuteCodeSegment( iNsisCallback - 1, 0 );
+
+			break;
+		}
+
+	case WM_DESTROY:
+		{
+			// Unsubclass this window. Should have been done by the caller...
+			while ( MyUnsubclassWindow( hWnd ) > 0 );
+			break;
+		}
+	}
+
+	// Call the original WndProc
+	if ( fnOriginalWndProc ) {
+		return CallWindowProc( fnOriginalWndProc, hWnd, iMsg, wParam, lParam );
+	} else {
+		return DefWindowProc( hWnd, iMsg, wParam, lParam );
+	}
+}
+
+//
+//  [exported] StartTimer
+//  ----------------------------------------------------------------------
+//  Input:  NsisCallbackFunction TimerInterval
+//  Output: None
+//
+//  The NsisCallbackFunction is a regular NSIS function, no input, no output.
+//  TimerInterval in milliseconds (1000ms = 1s)
+//
+//  Example:
+//    GetFunctionAddress $0 OnMyTimer
+//    NSutils::StartTimer /NOUNLOAD $0 1000
+//
+void __declspec(dllexport) StartTimer(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	int iCallback;
+	int iPeriod;
+
+	//	Cache global structures
+	EXDLL_INIT();
+
+	//	Check NSIS API compatibility
+	if ( !IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+
+	///	Param1: Callback function
+	iCallback = popint();
+
+	/// Param2: Timer interval (milliseconds)
+	iPeriod = popint();
+
+	// SetTimer
+	if (( iCallback != 0 ) && ( iPeriod > 0 ) && hWndParent && IsWindow( hWndParent )) {
+
+		if ( MySubclassWindow( hWndParent, MainWndProc ) > 0 ) {
+
+			/// Start the timer
+			/// Use the NSIS callback as timer ID
+			SetTimer( hWndParent, iCallback, iPeriod, NULL );
+		}
+	}
+}
+
+
+//
+//  [exported] StopTimer
+//  ----------------------------------------------------------------------
+//  Input:  NsisCallbackFunction
+//  Output: None
+//
+//  Example:
+//    GetFunctionAddress $0 OnMyTimer
+//    NSutils::StopTimer $0
+//
+void __declspec(dllexport) StopTimer(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	int iCallback;
+
+	//	Cache global structures
+	EXDLL_INIT();
+
+	//	Check NSIS API compatibility
+	if ( !IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+
+	///	Param1: Callback function
+	iCallback = popint();
+
+	// Kill the timer
+	if (( iCallback != 0 ) && hWndParent && IsWindow( hWndParent )) {
+
+		KillTimer( hWndParent, iCallback );
+		MyUnsubclassWindow( hWndParent );
+	}
 }

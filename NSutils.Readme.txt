@@ -181,3 +181,46 @@ Example:
 	NSutils::RestoreProgressStepBack /NOUNLOAD $mui.InstFilesPage.ProgressBar
 _______________________________________________________________________________
 
+[RedirectProgressBar]
+Redirect all messages to the second progress bar
+Set ProgressBar2Handle to NULL to remove the redirection.
+NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
+
+Syntax:
+	NSutils::RedirectProgressBar /NOUNLOAD ProgressBarHandle ProgressBar2Handle|NULL
+
+Return value:
+	None
+
+Example:
+	NSutils::RedirectProgressBar /NOUNLOAD $mui.InstFilesPage.ProgressBar $mui.MyProgressBar
+	${For} $R0 1 10
+		Sleep 1000
+	${Next}
+	NSutils::RedirectProgressBar /NOUNLOAD $mui.InstFilesPage.ProgressBar 0
+_______________________________________________________________________________
+
+[StartTimer]
+[StopTimer]
+Starts a timer. An callback is fired when the time ticks.
+The callback is a regular NSIS function, no input, no output.
+NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
+
+Syntax:
+	NSutils::StartTimer /NOUNLOAD NsisCallbackFunction TimerPeriodMS
+	NSutils::StopTimer [/NOUNLOAD] NsisCallbackFunction
+
+Return values:
+	None
+
+Example:
+	Function OnMyTimer
+		System::Call 'user32::MessageBeep( i 0xffffffff )'
+	FunctionEnd
+	...
+	GetFunctionAddress $0 OnMyTimer
+	NSutils::StartTimer /NOUNLOAD $0 1000
+	...
+	...
+	GetFunctionAddress $0 OnMyTimer
+	NSutils::StopTimer /NOUNLOAD $0
