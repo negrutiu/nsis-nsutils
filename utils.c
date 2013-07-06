@@ -38,6 +38,7 @@ BOOLEAN EnableWow64FsRedirection( __in BOOLEAN bEnable )
 #define PROP_WNDPROC_REFCOUNT			_T("NSutils.WndProc.RefCount")
 #define PROP_PROGRESSBAR_NOSTEPBACK		_T("NSutils.ProgressBar.NoStepBack")
 #define PROP_PROGRESSBAR_REDIRECTWND	_T("NSutils.ProgressBar.RedirectWnd")
+#define PROP_BNCLICKED_CALLBACK			_T("NSutils.BN_CLICKED.Callback")
 
 //++ MySubclassWindow
 INT_PTR MySubclassWindow(
@@ -640,10 +641,25 @@ LRESULT CALLBACK MainWndProc(
 			break;
 		}
 
+	case WM_COMMAND:
+		{
+			if ( HIWORD( wParam ) == BN_CLICKED ) {
+
+				int iNsisCallback = (int)GetProp( hWnd, PROP_BNCLICKED_CALLBACK );
+				if ( iNsisCallback != 0 ) {
+					pushint( LOWORD( wParam ));		/// Button control ID
+					pushint( lParam );				/// Button HWND
+					g_ep->ExecuteCodeSegment( iNsisCallback - 1, 0 );
+				}
+			}
+		}
+		break;
+
 	case WM_DESTROY:
 		{
 			// Unsubclass this window. Should have been done by the caller...
 			while ( MyUnsubclassWindow( hWnd ) > 0 );
+			RemoveProp( hWnd, PROP_BNCLICKED_CALLBACK );
 			break;
 		}
 	}
@@ -749,5 +765,104 @@ void __declspec(dllexport) StopTimer(
 
 		KillTimer( hWndParent, iCallback );
 		MyUnsubclassWindow( hWndParent );
+	}
+}
+
+
+//
+//  [exported] StartReceivingClicks
+//  ----------------------------------------------------------------------
+//  Input:  ParentWindow NsisCallbackFunction
+//  Output: None
+//
+//  The NsisCallbackFunction is a regular NSIS function. The HWND of the button is passed on the top of the stack.
+//  
+//
+//  Example:
+//    Function OnButtonClick
+//       Pop $1 ; Button HWND
+//       Pop $2 ; Button control ID
+//       MessageBox MB_OK "Button $2 pressed"
+//    FunctionEnd
+//    ...
+//    GetFunctionAddress $0 OnButtonClick
+//    NSutils::StartReceivingClicks /NOUNLOAD $HWNDPARENT $0
+//    ...
+//    GetFunctionAddress $0 OnButtonClick
+//    NSutils::StopReceivingClicks /NOUNLOAD $HWNDPARENT $0
+//
+void __declspec(dllexport) StartReceivingClicks(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	HWND hBtnParentWnd;
+	int iCallback;
+
+	//	Cache global structures
+	EXDLL_INIT();
+
+	//	Check NSIS API compatibility
+	if ( !IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+
+	///	Param1: HWND of the buttons' parent
+	hBtnParentWnd = (HWND)popint();
+
+	/// Param2: NSIS callback function
+	iCallback = popint();
+
+	if ( hBtnParentWnd && IsWindow( hBtnParentWnd ) && ( iCallback != 0 )) {
+
+		if ( GetProp( hBtnParentWnd, PROP_BNCLICKED_CALLBACK ) != NULL ) {
+			/// Already receiving clicks from this window. Just update the callback
+			SetProp( hBtnParentWnd, PROP_BNCLICKED_CALLBACK, (HANDLE)iCallback );
+		} else {
+			/// Subclass the window and start receiving button clicks
+			if ( MySubclassWindow( hBtnParentWnd, MainWndProc ) > 0 ) {
+				SetProp( hBtnParentWnd, PROP_BNCLICKED_CALLBACK, (HANDLE)iCallback );
+			}
+		}
+	}
+}
+
+//++ StopReceivingClicks
+void __declspec(dllexport) StopReceivingClicks(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	HWND hBtnParentWnd;
+
+	//	Cache global structures
+	EXDLL_INIT();
+
+	//	Check NSIS API compatibility
+	if ( !IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+
+	///	Param1: HWND of the buttons' parent
+	hBtnParentWnd = (HWND)popint();
+
+	// Stop receiving button clicks
+	if ( hBtnParentWnd && IsWindow( hBtnParentWnd )) {
+		if ( GetProp( hBtnParentWnd, PROP_BNCLICKED_CALLBACK ) != NULL ) {
+			RemoveProp( hBtnParentWnd, PROP_BNCLICKED_CALLBACK );
+			MyUnsubclassWindow( hBtnParentWnd );
+		}
 	}
 }

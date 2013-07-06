@@ -226,6 +226,35 @@ Example:
 	NSutils::StopTimer /NOUNLOAD $0
 _______________________________________________________________________________
 
+[StartReceivingClicks]
+[StopReceivingClicks]
+
+Subclass a window in order to intercept its BN_CLICKED commands.
+A NSIS callback is fired when a child button gets clicked.
+The callback function is a regular NSIS function. It receives button's HWND and ID on the stack. No return value.
+
+NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
+
+Syntax:
+	NSutils::StartReceivingClicks /NOUNLOAD ButtonParentWnd NsisCallbackFunction
+	NSutils::StopReceivingClicks [/NOUNLOAD] ButtonParentWnd
+
+Return values:
+	None
+
+Example:
+	Function OnButtonClicked
+		Pop $1	; Button HWND
+		Pop $2	; Button control ID
+		MessageBox MB_OK "Clicked button $2"
+	FunctionEnd
+	...
+	GetFunctionAddress $0 OnButtonClicked
+	NSutils::StartReceivingClicks /NOUNLOAD $HWNDPARENT $0
+	...
+	NSutils::StopReceivingClicks /NOUNLOAD $HWNDPARENT
+_______________________________________________________________________________
+
 [LoadImageFile]
 Loads an image in memory (HBITMAP).
 The source can be either a local file, or a web file (http, https, ftp, whatever else IE supports...)
