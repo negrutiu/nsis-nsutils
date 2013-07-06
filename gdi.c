@@ -307,6 +307,7 @@ void __declspec(dllexport) LoadImageFile(
 		// TODO:
 		// If Width and Height are zero, load the image using its original dimensions
 		// Add "stretch" to horizontal and vertical alignments
+		// Support transparent images
 
 		TCHAR szPath[MAX_PATH];
 		int w, h;
