@@ -5,15 +5,14 @@ Functions exported by NSutils
 _______________________________________________________________________________
 
 [GetVersionInfoString]
-Extracts a specific string from an executable's version information block.
+Extracts a specific string off of an executable's version information block.
 Be mindful of the file system redirection on 64-bit platforms!
 
 Syntax:
 	NSutils::GetVersionInfoString [/NOUNLOAD] ExeName VersionInfoString
 
 Return value:
-	The string will be returned on the stack.
-	An empty string will be returned in case of errors.
+	The requested string will be returned on the stack, or an empty string in case of errors...
 
 Example:
 	${DisableX64FSRedirection}	; Optional. On 64-bit platforms, read from System32 rather than SysWOW64
@@ -29,7 +28,7 @@ Example:
 _______________________________________________________________________________
 
 [GetFileVersion]
-Extracts the numeric file version from an executable's version information block
+Extracts the numeric file version off of an executable's version information block.
 Be mindful of the file system redirection on 64-bit platforms!
 
 Syntax:
@@ -37,10 +36,10 @@ Syntax:
 
 Return values:
 	If the operation is successful, the function will return a pre-formatted
-	version string (like "v1.v2.v3.v4") on the stack. In addition, $1, $2, $3 and $4
+	"v1.v2.v3.v4" version string on the stack. In addition, $1, $2, $3 and $4
 	will store each version component.
 	If the operation is unsuccessful, an empty string will be returned on the
-	stack. $1..$4 will *not* be set.
+	stack and $1..$4 will *not* be set.
 
 Example:
 	${DisableX64FSRedirection}	; Optional. On 64-bit platforms, read from System32 rather than SysWOW64
@@ -56,7 +55,7 @@ Example:
 _______________________________________________________________________________
 
 [GetProductVersion]
-Extracts the numeric product version from an executable's version information block
+Extracts the numeric product version off of an executable's version information block.
 Be mindful of the file system redirection on 64-bit platforms!
 
 Syntax:
@@ -64,10 +63,10 @@ Syntax:
 
 Return values:
 	If the operation is successful, the function will return a pre-formatted
-	version string (like "v1.v2.v3.v4") on the stack. In addition, $1, $2, $3 and $4
+	"v1.v2.v3.v4" version string on the stack. In addition, $1, $2, $3 and $4
 	will store each version component.
 	If the operation is unsuccessful, an empty string will be returned on the
-	stack. $1..$4 will *not* be set.
+	stack and $1..$4 will *not* be set.
 
 Example:
 	${DisableX64FSRedirection}	; Optional. On 64-bit platforms, read from System32 rather than SysWOW64
@@ -90,7 +89,7 @@ Syntax:
 	NSutils::ReadResourceString [/NOUNLOAD] ExeName StringID StringLANG
 
 Return values:
-	The string on the stack.
+	The resource string on the stack.
 	An empty string is returned in case of any error.
 
 Example:
@@ -107,12 +106,12 @@ _______________________________________________________________________________
 
 [WriteResourceString]
 Writes the specified string to an executable's string table.
-If an *empty* string is supplied, it will be deleted from the string table.
+If an *empty* string is specified, it will be removed from the string table.
 
 Be mindful of the file system redirection on 64-bit platforms!
 Be mindful of the .LN and .mui files (introduced in Vista)!
 Executables with sattelite .mui files cannot have their string tables updated!
-Read more here: "http://msdn.microsoft.com/en-us/library/windows/desktop/ms648049(v=vs.85).aspx"
+Read more: "http://msdn.microsoft.com/en-us/library/windows/desktop/ms648049(v=vs.85).aspx"
 
 Syntax:
 	NSutils::WriteResourceString [/NOUNLOAD] ExeName StringID StringLANG "The string"
@@ -182,8 +181,8 @@ Example:
 _______________________________________________________________________________
 
 [RedirectProgressBar]
-Redirect all messages to the second progress bar
-Set ProgressBar2Handle to NULL to remove the redirection.
+Redirects the relevant window messages of a progress bar to a second progress bar.
+To stop the redirection set ProgressBar2Handle to NULL.
 NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
 
 Syntax:
@@ -202,7 +201,7 @@ _______________________________________________________________________________
 
 [StartTimer]
 [StopTimer]
-Starts a timer. An callback is fired when the time ticks.
+Starts a timer. A callback is fired each time the clock ticks.
 The callback is a regular NSIS function, no input, no output.
 NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
 
@@ -229,7 +228,7 @@ _______________________________________________________________________________
 [StartReceivingClicks]
 [StopReceivingClicks]
 
-Subclass a window in order to intercept its BN_CLICKED commands.
+Subclass a button in order to intercept its BN_CLICKED commands.
 A NSIS callback is fired when a child button gets clicked.
 The callback function is a regular NSIS function. It receives button's HWND and ID on the stack. No return value.
 
