@@ -39,6 +39,7 @@ BOOLEAN EnableWow64FsRedirection( __in BOOLEAN bEnable )
 #define PROP_PROGRESSBAR_NOSTEPBACK		_T("NSutils.ProgressBar.NoStepBack")
 #define PROP_PROGRESSBAR_REDIRECTWND	_T("NSutils.ProgressBar.RedirectWnd")
 #define PROP_BNCLICKED_CALLBACK			_T("NSutils.BN_CLICKED.Callback")
+#define PROP_WMTIMER_CALLBACK			_T("NSutils.WM_TIMER.Callback.%d")
 
 //++ MySubclassWindow
 INT_PTR MySubclassWindow(
@@ -632,11 +633,17 @@ LRESULT CALLBACK MainWndProc(
 	{
 	case WM_TIMER:
 		{
-			// The NSIS callback is also used as timer ID
+			// We use the NSIS callback also as a timer ID
+			// In order to avoid collisions with other (legitimate) WM_TIMER ticks, we have to make sure that this timer ID is actually one of our callbacks
 			int iNsisCallback = (int)wParam;
 
-			// Call the NSIS callback
-			g_ep->ExecuteCodeSegment( iNsisCallback - 1, 0 );
+			TCHAR szPropName[128];
+			wsprintf( szPropName, PROP_WMTIMER_CALLBACK, iNsisCallback );
+			if ( GetProp( hWnd, szPropName )) {
+
+				// Call the NSIS callback
+				g_ep->ExecuteCodeSegment( iNsisCallback - 1, 0 );
+			}
 
 			break;
 		}
@@ -718,6 +725,11 @@ void __declspec(dllexport) StartTimer(
 
 		if ( MySubclassWindow( hWndParent, MainWndProc ) > 0 ) {
 
+			/// Remember the NSIS callback for later. Needed for validations
+			TCHAR szPropName[128];
+			wsprintf( szPropName, PROP_WMTIMER_CALLBACK, iCallback );
+			SetProp( hWndParent, szPropName, (HANDLE)TRUE );
+
 			/// Start the timer
 			/// Use the NSIS callback as timer ID
 			SetTimer( hWndParent, iCallback, iPeriod, NULL );
@@ -765,6 +777,13 @@ void __declspec(dllexport) StopTimer(
 
 		KillTimer( hWndParent, iCallback );
 		MyUnsubclassWindow( hWndParent );
+
+		/// Forget this NSIS callback
+		if ( TRUE ) {
+			TCHAR szPropName[128];
+			wsprintf( szPropName, PROP_WMTIMER_CALLBACK, iCallback );
+			RemoveProp( hWndParent, szPropName );
+		}
 	}
 }
 
