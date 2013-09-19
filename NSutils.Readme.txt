@@ -136,9 +136,10 @@ The routine examines the "PendingFileRenameOperations" registry value and
 executes the operations on files that match a specified search pattern.
 The operations will be removed from the registry value, therefore they won't
 be executed during the next reboot...
+If not empty, this routine will log all file rename operations to LogFile.
 
 Syntax:
-	NSutils::ExecutePendingFileRenameOperations [/NOUNLOAD] "FileSubstring"
+	NSutils::ExecutePendingFileRenameOperations [/NOUNLOAD] "FileSubstring" "LogFile"
 
 Return values:
 	Two error codes are returned on the stack.
@@ -146,7 +147,7 @@ Return values:
 	2. Win32 error code of the first failed operation
 
 Example:
-	NSutils::ExecutePendingFileRenameOperations [/NOUNLOAD] "AppData\Local\Temp"
+	NSutils::ExecutePendingFileRenameOperations [/NOUNLOAD] "AppData\Local\Temp" "C:\MyPath\MyLog.txt"
 	Pop $0
 	Pop $1
 	${If} $0 = ${ERROR_SUCCESS}

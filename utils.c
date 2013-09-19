@@ -4,6 +4,88 @@
 #include "nsiswapi\pluginapi.h"
 
 
+//++ LogWriteFile
+DWORD LogWriteFile(
+	__in HANDLE hFile,
+	__in LPCTSTR pszFormat,
+	...
+	)
+{
+	DWORD err = ERROR_SUCCESS;
+	if ( hFile && (hFile != INVALID_HANDLE_VALUE) && pszFormat && *pszFormat ) {
+
+		TCHAR szStr[1024];
+		int iLen;
+		DWORD dwWritten;
+		va_list args;
+
+		va_start(args, pszFormat);
+		iLen = wvnsprintf( szStr, (int)ARRAYSIZE(szStr), pszFormat, args );
+		if ( iLen > 0 ) {
+
+			if ( iLen < ARRAYSIZE(szStr))
+				szStr[iLen] = 0;	/// The string is not guaranteed to be null terminated. We'll add the terminator ourselves
+
+			WriteFile( hFile, szStr, iLen * sizeof(TCHAR), &dwWritten, NULL );
+		}
+		va_end(args);
+
+	} else {
+		err = ERROR_INVALID_PARAMETER;
+	}
+	return err;
+}
+
+
+//++ LogCreateFile
+HANDLE LogCreateFile(
+	__in LPCTSTR pszLogFile,
+	__in BOOLEAN bOverwrite
+	)
+{
+	HANDLE hFile = INVALID_HANDLE_VALUE;
+
+	if ( pszLogFile && *pszLogFile ) {
+
+		hFile = CreateFile( pszLogFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, bOverwrite ? CREATE_ALWAYS : OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+		if ( hFile != INVALID_HANDLE_VALUE ) {
+
+			LARGE_INTEGER iFileSize;
+			if ( bOverwrite ||
+				 (GetFileSizeEx( hFile, &iFileSize ) && ( iFileSize.QuadPart == 0 )))
+			{
+				/// New file
+#ifdef _UNICODE
+				DWORD dwWritten;
+				WORD iBom = 0xFEFF;
+				WriteFile( hFile, &iBom, sizeof(iBom), &dwWritten, NULL );
+#endif
+			} else {
+				if ( !bOverwrite ) {
+					/// Existing file
+					SetFilePointer( hFile, 0, NULL, FILE_END );
+					LogWriteFile( hFile, _T("\r\n"));
+				}
+			}
+		}
+	} else {
+		SetLastError( ERROR_INVALID_PARAMETER );
+	}
+	return hFile;
+}
+
+
+//++ LogCloseHandle
+BOOL LogCloseHandle( __in HANDLE hFile )
+{
+	if ( hFile && (hFile != INVALID_HANDLE_VALUE)) {
+		return CloseHandle( hFile );
+	} else {
+		SetLastError( ERROR_INVALID_PARAMETER );
+		return FALSE;
+	}
+}
+
 //++ IsWow64
 BOOL IsWow64()
 {
@@ -177,7 +259,8 @@ void * __cdecl memmove (
 //++ ExecutePendingFileRenameOperationsImpl
 DWORD ExecutePendingFileRenameOperationsImpl(
 	__in_opt LPCTSTR pszSrcFileSubstr,		/// Case insensitive. Only SrcFile-s that contain this substring will be processed. Can be empty in which case all pended file operations are executed.
-	__out_opt LPDWORD pdwFileOpError
+	__out_opt LPDWORD pdwFileOpError,
+	__in_opt LPCTSTR pszLogFile				/// If not NULL, the routine will log all file rename operations
 	)
 {
 #define REGKEY_PENDING_FILE_OPS	_T("SYSTEM\\CurrentControlSet\\Control\\Session Manager")
@@ -189,6 +272,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 	BYTE iMinorVersion = HIBYTE(LOWORD(GetVersion()));
 	DWORD dwKeyFlags = 0;
 	BOOLEAN bDisabledFSRedirection = FALSE;
+	HANDLE hLogFile = INVALID_HANDLE_VALUE;
 
 	if ( iMajorVersion > 5 || ( iMajorVersion == 5 && iMinorVersion >= 1 ))		/// XP or newer
 		dwKeyFlags |= KEY_WOW64_64KEY;
@@ -196,15 +280,22 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 	if ( pdwFileOpError )
 		*pdwFileOpError = ERROR_SUCCESS;
 
+	// Create the log file
+	hLogFile = LogCreateFile( pszLogFile, FALSE );
+	LogWriteFile( hLogFile, _T("ExecutePendingFileRenameOperations( \"%s\" ) {\r\n"), pszSrcFileSubstr ? pszSrcFileSubstr : _T(""));
+
 	// Read the REG_MULTI_SZ value
 	err = RegOpenKeyEx( HKEY_LOCAL_MACHINE, REGKEY_PENDING_FILE_OPS, 0, KEY_READ | KEY_WRITE | dwKeyFlags, &hKey );
+	LogWriteFile( hLogFile, _T("\tRegOpenKeyEx( \"HKLM\\%s\" ) == 0x%x\r\n"), REGKEY_PENDING_FILE_OPS, err );
 	if ( err == ERROR_SUCCESS ) {
 		DWORD dwType, dwSize = 0;
 		err = RegQueryValueEx( hKey, REGVAL_PENDING_FILE_OPS, NULL, &dwType, NULL, &dwSize );
+		LogWriteFile( hLogFile, _T("\tRegQueryValueEx( \"REGVAL_PENDING_FILE_OPS\", 0 ) == 0x%x, Size == %u\r\n"), err, dwSize );
 		if ( err == ERROR_SUCCESS && dwType == REG_MULTI_SZ && dwSize > 0 ) {
 			LPTSTR pszValue = (LPTSTR)GlobalAlloc( GMEM_FIXED, dwSize );
 			if ( pszValue ) {
 				err = RegQueryValueEx( hKey, REGVAL_PENDING_FILE_OPS, NULL, &dwType, (LPBYTE)pszValue, &dwSize );
+				LogWriteFile( hLogFile, _T("\tRegQueryValueEx( \"REGVAL_PENDING_FILE_OPS\", %d ) == 0x%x"), dwSize, err );
 				if ( err == ERROR_SUCCESS && dwType == REG_MULTI_SZ && dwSize > 0 ) {
 
 					// PendingFileRenameOperations contains pairs of strings (SrcFile, DstFile)
@@ -231,12 +322,12 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 								// At this point we have both, SrcFile and DstFile
 								// We'll execute the pended operation if SrcFile matches our search criteria
 
-								if ( pszValue[iIndexSrcFile] &&
-									( !pszSrcFileSubstr || !*pszSrcFileSubstr || StrStrI( pszValue + iIndexSrcFile, pszSrcFileSubstr ))
+								LPCTSTR pszSrcFile = pszValue + iIndexSrcFile;
+								if ( *pszSrcFile &&
+									( !pszSrcFileSubstr || !*pszSrcFileSubstr || StrStrI( pszSrcFile, pszSrcFileSubstr ))
 									)
 								{
 									/// Ignore "\??\" prefix
-									LPCTSTR pszSrcFile = pszValue + iIndexSrcFile;
 									if ( StrCmpN( pszSrcFile, _T("\\??\\"), 4 ) == 0 )
 										pszSrcFile += 4;
 
@@ -246,6 +337,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 
 									if ( !pszValue[iIndexDstFile] ) {
 
+										// TODO: Handle directories!
 										// Delete SrcFile
 										err3 = ERROR_SUCCESS;
 										if ( !DeleteFile( pszSrcFile )) {
@@ -255,6 +347,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 											if ( pdwFileOpError && ( *pdwFileOpError == ERROR_SUCCESS ))	/// Only the first encountered error is remembered
 												*pdwFileOpError = err2;
 										}
+										LogWriteFile( hLogFile, _T("\tDelete( \"%s\" ) == 0x%x\r\n"), pszSrcFile, err3 );
 
 										/*{
 											TCHAR sz[512];
@@ -264,6 +357,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 
 									} else {
 
+										// TODO: Handle directories!
 										/// Ignore "!" and "\??\" prefixes
 										LPCTSTR pszDstFile = pszValue + iIndexDstFile;
 										if ( *pszDstFile == _T('!'))
@@ -280,6 +374,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 											if ( pdwFileOpError && ( *pdwFileOpError == ERROR_SUCCESS ))	/// Only the first encountered error is remembered
 												*pdwFileOpError = err2;
 										}
+										LogWriteFile( hLogFile, _T("\tRename( \"%s\", \"%s\" ) == 0x%x\r\n"), pszSrcFile, pszDstFile, err3 );
 
 										/*{
 											TCHAR sz[512];
@@ -300,6 +395,8 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 									iIndexDstFile = -1;
 
 								} else {
+									if ( *pszSrcFile )
+										LogWriteFile( hLogFile, _T("\tIgnore( \"%s\" )\r\n"), pszSrcFile );
 									iIndexSrcFile = i + 1;
 									iIndexDstFile = -1;
 								}
@@ -331,6 +428,10 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 	if ( bDisabledFSRedirection )
 		EnableWow64FsRedirection( TRUE );
 
+	/// Close the log
+	LogWriteFile( hLogFile, _T("}\r\n"));
+	LogCloseHandle( hLogFile );
+
 	return err;
 }
 
@@ -339,7 +440,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 //  [exported] ExecutePendingFileRenameOperations
 //  ----------------------------------------------------------------------
 //  Example:
-//    NSutils::ExecutePendingFileRenameOperations "SrcFileSubstr"
+//    NSutils::ExecutePendingFileRenameOperations "SrcFileSubstr" "X:\path\mylog.log"
 //    Pop $0 ; Win32 error code
 //    Pop $1 ; File operations Win32 error code
 //    ${If} $0 = 0
@@ -372,18 +473,28 @@ void __declspec(dllexport) ExecutePendingFileRenameOperations(
 	pszBuf = (TCHAR*)GlobalAlloc( GPTR, sizeof(TCHAR) * string_size );
 	if ( pszBuf ) {
 
+		DWORD err, fileop_err;
+		TCHAR szSubstring[255];
+		TCHAR szLogFile[MAX_PATH];
+
 		///	Param1: SrcFileSubstr
-		if ( popstring( pszBuf ) == 0 ) {
+		szSubstring[0] = 0;
+		if ( popstring( pszBuf ) == 0 )
+			lstrcpy( szSubstring, pszBuf );
 
-			DWORD err, fileop_err;
-			err = ExecutePendingFileRenameOperationsImpl( pszBuf, &fileop_err );
+		///	Param2: SrcFileSubstr
+		szLogFile[0] = 0;
+		if ( popstring( pszBuf ) == 0 )
+			lstrcpy( szLogFile, pszBuf );
 
-			wsprintf( pszBuf, _T("%hu"), fileop_err );
-			pushstring( pszBuf );
+		// Execute
+		err = ExecutePendingFileRenameOperationsImpl( szSubstring, &fileop_err, szLogFile );
 
-			wsprintf( pszBuf, _T("%hu"), err );
-			pushstring( pszBuf );
-		}
+		wsprintf( pszBuf, _T("%hu"), fileop_err );
+		pushstring( pszBuf );
+
+		wsprintf( pszBuf, _T("%hu"), err );
+		pushstring( pszBuf );
 
 		/// Free memory
 		GlobalFree( pszBuf );

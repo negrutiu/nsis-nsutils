@@ -206,7 +206,10 @@ Section /o "Test PendingFileRenameOperations (requires Admin)"
 	System::Call 'kernel32::MoveFileEx( t "$DESKTOP\MyNotepad.exe", t "$DESKTOP\MyNotepad2.exe", i ${MOVEFILE_DELAY_UNTIL_REBOOT} ) i.r0'
 	${Print} 'MoveFileEx( "DESKTOP\MyNotepad.exe", "DESKTOP\MyNotepad2.exe", MOVEFILE_DELAY_UNTIL_REBOOT ) == $0'
 
-	NSutils::ExecutePendingFileRenameOperations /NOUNLOAD "MyNotepad"
+	;Push "$EXEDIR\PendingFileRename.log"
+	;Push "MyNotepad"
+	;CallInstDLL "$EXEDIR\..\DebugW\NSutils.dll" ExecutePendingFileRenameOperations
+	NSutils::ExecutePendingFileRenameOperations /NOUNLOAD "MyNotepad" "$EXEDIR\PendingFileRename.log"
 	Pop $0
 	Pop $1
 
