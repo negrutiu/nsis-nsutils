@@ -295,7 +295,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 			LPTSTR pszValue = (LPTSTR)GlobalAlloc( GMEM_FIXED, dwSize );
 			if ( pszValue ) {
 				err = RegQueryValueEx( hKey, REGVAL_PENDING_FILE_OPS, NULL, &dwType, (LPBYTE)pszValue, &dwSize );
-				LogWriteFile( hLogFile, _T("\tRegQueryValueEx( \"REGVAL_PENDING_FILE_OPS\", %d ) == 0x%x"), dwSize, err );
+				LogWriteFile( hLogFile, _T("\tRegQueryValueEx( \"REGVAL_PENDING_FILE_OPS\", %u ) == 0x%x\r\n"), dwSize, err );
 				if ( err == ERROR_SUCCESS && dwType == REG_MULTI_SZ && dwSize > 0 ) {
 
 					// PendingFileRenameOperations contains pairs of strings (SrcFile, DstFile)
