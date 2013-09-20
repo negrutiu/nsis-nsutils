@@ -130,11 +130,13 @@ DWORD LoadImageFileImpl(
 			if ( SUCCEEDED( hr )) {
 
 				// IImgCtx_Load is asynchronous. We must wait in loop until the operation gets finished
+				DWORD dwStartTime = GetTickCount();
 				while (
 					SUCCEEDED( IImgCtx_GetStateInfo( pImage, &dwState, NULL, TRUE )) &&
-					(dwState & (IMGLOAD_COMPLETE|IMGLOAD_ERROR)) == 0
+					((dwState & (IMGLOAD_COMPLETE|IMGLOAD_ERROR)) == 0) &&
+					(GetTickCount() - dwStartTime < 3000)	/// Timeout
 					)
-					Sleep(0);
+					Sleep(100);
 
 				IImgCtx_GetStateInfo( pImage, &dwState, &ImgSize, TRUE );
 				if ((( dwState & IMGLOAD_MASK ) == IMGLOAD_COMPLETE ) && ( ImgSize.cx != 0 ) && ( ImgSize.cy != 0 )) {
