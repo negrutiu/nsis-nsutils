@@ -256,9 +256,9 @@ Example:
 _______________________________________________________________________________
 
 [LoadImageFile]
-Loads an image in memory (HBITMAP).
-The source can be either a local file, or a web file (http, https, ftp, whatever else IE supports...)
-Supported formats: bmp, jpg, png, ico, gif, etc..
+Loads an image in memory (HBITMAP) using oleaut32!OleLoadPicturePath.
+The source can be either a local file, or an URL
+Supported formats: BMP, JPEG, GIF
 
 You have to specify the HBITMAP dimensions. The original image will be fitted
 within these boundaries according to alignment flags.

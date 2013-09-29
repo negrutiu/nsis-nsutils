@@ -2,7 +2,10 @@
 #include "nsiswapi\pluginapi.h"
 
 #define COBJMACROS
-#include <IImgCtx.h>
+#include <OleCtl.h>
+#include <OCIdl.h>
+
+int _fltused = 0;			/// For some reason AlphaBlend is using this. The module won't link without it.
 
 #define ALIGN_LEFT			1
 #define ALIGN_TOP			1
@@ -98,6 +101,193 @@ COLORREF PickFillColor(
 }
 
 
+//++ PrepareBitmapForAlphaBlend
+BOOL PrepareBitmapForAlphaBlend( __inout HBITMAP hBmp )
+{
+	BOOL bHasAlphaChannel = FALSE;
+	if ( hBmp ) {
+
+		BITMAP bm;
+		if ( GetObject( hBmp, sizeof( bm ), &bm ) > 0 ) {
+
+			// Make sure this is a 32bpp bitmap
+			// Otherwise, there's no alpha channel anyway...
+			if ( bm.bmBitsPixel == 32 ) {
+
+				int x, y;
+				double dFactor;
+				LPRGBQUAD pBits;
+
+				// Make a quick pass and check whether the alpha channel is used at all.
+				pBits = (LPRGBQUAD)bm.bmBits;
+				for ( y = 0; y < bm.bmHeight && !bHasAlphaChannel; y++ ) {
+					for ( x = 0; x < bm.bmWidth; x++ ) {
+						if ( pBits->rgbReserved != 0 ) {
+							bHasAlphaChannel = TRUE;
+							break;
+						}
+						pBits++;
+					}
+				}
+
+				// Get direct access to bitmap's bits
+				pBits = (LPRGBQUAD)bm.bmBits;
+				if ( bHasAlphaChannel ) {
+					// Pre-multiply the color channels the way AlphBlend is expecting
+					for ( y = 0; y < bm.bmHeight; y++ ) {
+						for ( x = 0; x < bm.bmWidth; x++ ) {
+							dFactor         = pBits->rgbReserved / 255.0F;
+							pBits->rgbRed   = (BYTE)(pBits->rgbRed   * dFactor);
+							pBits->rgbGreen = (BYTE)(pBits->rgbGreen * dFactor);
+							pBits->rgbBlue  = (BYTE)(pBits->rgbBlue  * dFactor);
+							pBits++;
+						}
+					}
+				} else {
+					// Just set the alpha channel to 255 (full opacity)
+					for ( y = 0; y < bm.bmHeight; y++ ) {
+						for ( x = 0; x < bm.bmWidth; x++ ) {
+							pBits->rgbReserved = 255;
+							pBits++;
+						}
+					}
+				}
+
+			} else {
+				//assert(!"not a 32bpp image sent to PrepareBitmapForAlphaBlend");
+			}
+		}
+	}
+	return bHasAlphaChannel;
+}
+
+
+//++ ResampleBitmap
+DWORD ResampleBitmap(
+	__in HBITMAP hBitmap,
+	__in int iWidth,
+	__in int iHeight,
+	__in int iAlignHorz,
+	__in int iAlignVert,
+	__out HBITMAP *phBitmap
+	)
+{
+	DWORD err = ERROR_SUCCESS;
+	if ( hBitmap && phBitmap && (iWidth > 0) && (iHeight > 0)) {
+
+		// Create a device independent bitmap
+		int iSize = sizeof(BITMAPINFOHEADER) + 32 * iWidth * iHeight;
+		BITMAPINFO *pBmi = (BITMAPINFO*)GlobalAlloc( GPTR, iSize );
+		if ( pBmi ) {
+
+			pBmi->bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
+			pBmi->bmiHeader.biWidth = iWidth;
+			pBmi->bmiHeader.biHeight = iHeight;
+			pBmi->bmiHeader.biPlanes = 1;
+			pBmi->bmiHeader.biBitCount = 32;
+
+			*phBitmap = CreateDIBSection( NULL, pBmi, DIB_RGB_COLORS, NULL, NULL, 0 );
+			GlobalFree( pBmi );
+			if ( *phBitmap ) {
+
+				int x, y;
+				int iSrcWidth, iSrcHeight;
+				BITMAP bm;
+
+				GetObject( hBitmap, sizeof(bm), &bm );
+				iSrcWidth = bm.bmWidth;
+				iSrcHeight = bm.bmHeight;
+
+				/// Horizontal alignment
+				switch ( iAlignHorz )
+				{
+				case ALIGN_LEFT:	x = 0;	break;
+				case ALIGN_RIGHT:	x = iWidth - iSrcWidth;	break;
+				default:			x = ( iWidth - iSrcWidth ) / 2;
+				}
+
+				/// Vertical alignment
+				switch ( iAlignVert )
+				{
+				case ALIGN_TOP:		y = 0; break;
+				case ALIGN_BOTTOM:	y = iHeight - iSrcHeight; break;
+				default:			y = ( iHeight - iSrcHeight ) / 2;
+				}
+
+				// Draw
+				if ( TRUE )
+				{
+					HDC hSrcDC = CreateCompatibleDC( NULL );
+					HDC hDstDC = CreateCompatibleDC( NULL );
+					HBITMAP hOldSrcBitmap = (HBITMAP)SelectObject( hSrcDC, hBitmap );
+					HBITMAP hOldDstBitmap = (HBITMAP)SelectObject( hDstDC, *phBitmap );
+					BOOL bHasAlphaChannel = FALSE;
+
+					bHasAlphaChannel = PrepareBitmapForAlphaBlend( hBitmap );
+					if ( bHasAlphaChannel ) {
+
+						BLENDFUNCTION bf = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+						RECT rc = { 0, 0, iWidth, iHeight };
+
+						// White-fill the destination, and paint the (transparent) bitmap over it
+						FillRect( hDstDC, &rc, (HBRUSH)GetStockObject( WHITE_BRUSH ));
+						AlphaBlend( hDstDC, x, y, iSrcWidth, iSrcHeight, hSrcDC, 0, 0, iSrcWidth, iSrcHeight, bf );
+
+					} else {
+
+						// Draw the (opaque) bitmap, then fill the surrounding areas
+						BitBlt( hDstDC, x, y, iSrcWidth, iSrcHeight, hSrcDC, 0, 0, SRCCOPY );
+						if ( iWidth > iSrcWidth || iHeight > iSrcHeight )
+						{
+							COLORREF cl = PickFillColor( hSrcDC, 0, 0, iSrcWidth, iSrcHeight );
+							HBRUSH br = CreateSolidBrush( cl );
+							RECT rc;
+
+							if ( iWidth > iSrcWidth ) {
+								SetRect( &rc, 0, 0, x, iHeight );			/// Left side of the image
+								FillRect( hDstDC, &rc, br );
+								SetRect( &rc, x + iSrcWidth, 0, iWidth, iHeight );	/// Right side of the image
+								FillRect( hDstDC, &rc, br );
+							}
+							if ( iHeight > iSrcHeight ) {
+								SetRect( &rc, x, 0, x + iSrcWidth, y );			/// Top side of the image
+								FillRect( hDstDC, &rc, br );
+								SetRect( &rc, x, y + iSrcHeight, x + iSrcWidth, iHeight );	/// Bottom side of the image
+								FillRect( hDstDC, &rc, br );
+							}
+							DeleteObject( br );
+						}
+					}
+
+					/// Border
+					if ( TRUE ) {
+						HBRUSH br = CreateSolidBrush( RGB( 211, 212, 214 ));
+						RECT rc = { 0, 0, iWidth, iHeight };
+						FrameRect( hDstDC, &rc, br );
+						DeleteObject( br );
+					}
+
+					SelectObject( hSrcDC, hOldSrcBitmap );
+					SelectObject( hDstDC, hOldDstBitmap );
+					DeleteDC( hSrcDC );
+					DeleteDC( hDstDC );
+				}
+
+			} else {
+				err = GetLastError();		/// CreateDIBSection
+			}
+		} else {
+			err = GetLastError();		/// GlobalAlloc
+		}
+
+	} else {
+		err = ERROR_INVALID_PARAMETER;
+	}
+
+	return err;
+}
+
+
 //++ LoadImageFileImpl
 DWORD LoadImageFileImpl(
 	__in LPCTSTR pszFilePath,
@@ -111,156 +301,48 @@ DWORD LoadImageFileImpl(
 	DWORD err = ERROR_SUCCESS;
 	if ( pszFilePath && *pszFilePath && (iWidth > 0) && (iHeight > 0) && phBitmap ) {
 
+		// OLE initialize
+		HRESULT hrOleInit = OleInitialize( NULL );
+
 		// Load the image in memory
-		HRESULT hr;
-		IImgCtx *pImage = NULL;
-
-		hr = CoCreateInstance( &CLSID_IImgCtx, NULL, CLSCTX_ALL, &IID_IImgCtx, (void**)&pImage );
-		if ( SUCCEEDED( hr )) {
-
-			DWORD dwState;
-			SIZE ImgSize = {0, 0};
-#ifdef _UNICODE
-			LPCWSTR pszPathW = pszFilePath;
+		IPicture *pIPicture = NULL;
+#if defined _UNICODE
+		LPCWSTR pszW = pszFilePath;
 #else
-			WCHAR pszPathW[MAX_PATH];
-			MultiByteToWideChar( CP_ACP, 0, pszFilePath, -1, pszPathW, ARRAYSIZE(pszPathW));
+		WCHAR pszW[512];
+		pszW[0] = UNICODE_NULL;
+		MultiByteToWideChar( CP_ACP, 0, pszFilePath, -1, pszW, ARRAYSIZE(pszW));
 #endif
-			hr = IImgCtx_Load( pImage, pszPathW, 0 );
-			if ( SUCCEEDED( hr )) {
+		err = OleLoadPicturePath((LPOLESTR)pszW, NULL, 0, 0, &IID_IPicture, &pIPicture );
+		if ( SUCCEEDED( err )) {
 
-				// IImgCtx_Load is asynchronous. We must wait in loop until the operation gets finished
-				DWORD dwStartTime = GetTickCount();
-				while (
-					SUCCEEDED( IImgCtx_GetStateInfo( pImage, &dwState, NULL, TRUE )) &&
-					((dwState & (IMGLOAD_COMPLETE|IMGLOAD_ERROR)) == 0) &&
-					(GetTickCount() - dwStartTime < 3000)	/// Timeout
-					)
-					Sleep(100);
+			// Make sure it's stored in memory as HBITMAP (as opposed to HICON, HMETAFILE, HENHMETAFILE, etc.)
+			SHORT iPicType;
+			err = IPicture_get_Type( pIPicture, &iPicType );
+			if ( SUCCEEDED( err )) {
 
-				IImgCtx_GetStateInfo( pImage, &dwState, &ImgSize, TRUE );
-				if ((( dwState & IMGLOAD_MASK ) == IMGLOAD_COMPLETE ) && ( ImgSize.cx != 0 ) && ( ImgSize.cy != 0 )) {
+				if ( iPicType == PICTYPE_BITMAP ) {
 
-					HDC hDC;
-					HBITMAP hBmpOriginal;
+					// Get the HBITMAP
+					OLE_HANDLE hIPictureHandle;
+					err = (DWORD)IPicture_get_Handle( pIPicture, &hIPictureHandle );
+					if ( SUCCEEDED( err )) {
 
-					// Create a new bitmap. Use specified dimensions
-					// Copy the content of the temporary bitmap according to alignment flags
-					hDC = CreateCompatibleDC( NULL );
-					if ( hDC ) {
-
-						// Create a device independent bitmap
-						int iSize = sizeof(BITMAPINFOHEADER) + 32 * iWidth * iHeight;
-						BITMAPINFO *pBmi = (BITMAPINFO*)GlobalAlloc( GPTR, iSize );
-						if ( pBmi ) {
-
-							pBmi->bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
-							pBmi->bmiHeader.biWidth = iWidth;
-							pBmi->bmiHeader.biHeight = iHeight;
-							pBmi->bmiHeader.biPlanes = 1;
-							pBmi->bmiHeader.biBitCount = 32;
-
-							*phBitmap = CreateDIBSection( NULL, pBmi, DIB_RGB_COLORS, NULL, NULL, 0 );
-							GlobalFree( pBmi );
-							if ( *phBitmap ) {
-
-								int x, y, w, h;
-
-								w = min( iWidth, ImgSize.cx );
-								h = min( iHeight, ImgSize.cy );
-
-								/// Horizontal alignment
-								switch ( iAlignHorz )
-								{
-								case ALIGN_LEFT:	x = 0;	break;
-								case ALIGN_RIGHT:	x = iWidth - w;	break;
-								default:			x = ( iWidth - ImgSize.cx ) / 2;
-								}
-
-								/// Vertical alignment
-								switch ( iAlignVert )
-								{
-								case ALIGN_TOP:		y = 0; break;
-								case ALIGN_BOTTOM:	y = iHeight - h; break;
-								default:			y = ( iHeight - ImgSize.cy ) / 2;
-								}
-
-								// Select the bitmap into the DC
-								hBmpOriginal = (HBITMAP)SelectObject( hDC, *phBitmap );
-
-								// Draw
-								if ( TRUE ) {
-									RECT bounds = { x, y, x + ImgSize.cx, y + ImgSize.cy };
-									hr = IImgCtx_Draw( pImage, hDC, &bounds );
-								}
-
-								// Fill empty areas
-								if ( iWidth > ImgSize.cx || iHeight > ImgSize.cy )
-								{
-									int xx = max( 0, x );
-									int yy = max( 0, y );
-									COLORREF cl = PickFillColor( hDC, xx, yy, w, h );
-									HBRUSH br = CreateSolidBrush( cl );
-									RECT rc;
-
-									if ( iWidth > ImgSize.cx ) {
-										SetRect( &rc, 0, 0, x, iHeight );			/// Left side of the image
-										FillRect( hDC, &rc, br );
-										SetRect( &rc, x + w, 0, iWidth, iHeight );	/// Right side of the image
-										FillRect( hDC, &rc, br );
-									}
-									if ( iHeight > ImgSize.cy ) {
-										SetRect( &rc, xx, 0, xx + w, y );			/// Top side of the image
-										FillRect( hDC, &rc, br );
-										SetRect( &rc, xx, y + h, xx + w, iHeight );	/// Bottom side of the image
-										FillRect( hDC, &rc, br );
-									}
-									DeleteObject( br );
-								}
-
-								// Unselect the bitmap from DC
-								SelectObject( hDC, hBmpOriginal );
-
-								// Remove the alpha channel
-								if ( TRUE ) {
-									BITMAP bm;
-									if ( GetObject( *phBitmap, sizeof( bm ), &bm ) > 0 ) {
-										LPRGBQUAD pBits = (LPRGBQUAD)bm.bmBits;
-										for ( y = 0; y < bm.bmHeight; y++ ) {
-											for ( x = 0; x < bm.bmWidth; x++ ) {
-												pBits->rgbReserved = 0;		/// No alpha channel
-												pBits++;
-											}
-										}
-									}
-								}
-
-							} else {
-								err = GetLastError();		/// CreateDIBSection
-							}
-						} else {
-							err = GetLastError();		/// GlobalAlloc
-						}
-
-						DeleteDC( hDC );
-
-					} else {
-						err = ERROR_OUTOFMEMORY;	/// CreateCompatibleDC
+						// Resize
+						err = ResampleBitmap((HBITMAP)hIPictureHandle, iWidth, iHeight, iAlignHorz, iAlignVert, phBitmap );
 					}
 
 				} else {
-					err = ERROR_BAD_FILE_TYPE;
+					err = ERROR_UNSUPPORTED_TYPE;
 				}
-			} else {
-				err = hr;
 			}
 
-			IImgCtx_Disconnect( pImage );
-			IImgCtx_Release( pImage );
-
-		} else {
-			err = hr;
+			IPicture_Release( pIPicture );
 		}
+
+		if ( SUCCEEDED( hrOleInit ))
+			OleUninitialize();
+
 	} else {
 		err = ERROR_INVALID_PARAMETER;
 	}
