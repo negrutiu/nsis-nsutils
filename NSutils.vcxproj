@@ -241,10 +241,14 @@
     <ClInclude Include="nsiswapi\api.h" />
     <ClInclude Include="nsiswapi\nsis_tchar.h" />
     <ClInclude Include="nsiswapi\pluginapi.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="strblock.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="NSutils.Readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="NSutils.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

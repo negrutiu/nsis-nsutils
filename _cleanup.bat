@@ -21,3 +21,4 @@ del *.ncb
 del *.user
 del *.bak
 del *.sdf
+del *.aps
