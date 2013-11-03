@@ -228,6 +228,25 @@ Section /o "Test PendingFileRenameOperations (requires Admin)"
 SectionEnd
 
 
+Section /o "Test FindFileRenameOperations"
+
+	${Print} "--------------------------------------------------------------"
+
+	StrCpy $R0 "temp"	; Substring to find
+	;Push $R0
+	;CallInstDLL "$EXEDIR\..\DebugW\NSutils.dll" FindPendingFileRenameOperations
+	NSutils::FindPendingFileRenameOperations /NOUNLOAD $R0
+	Pop $0
+	${Print} 'FindPendingFileRenameOperations( "$R0" ) == "$0"'
+
+	StrCpy $R0 "*"	; Substring to find
+	NSutils::FindPendingFileRenameOperations /NOUNLOAD $R0
+	Pop $0
+	${Print} 'FindPendingFileRenameOperations( "$R0" ) == "$0"'
+
+SectionEnd
+
+
 Section /o "Test string table manipulation"
 
 	${Print} "--------------------------------------------------------------"

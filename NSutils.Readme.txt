@@ -160,6 +160,26 @@ Example:
 	${EndIf}
 _______________________________________________________________________________
 
+[FindPendingFileRenameOperations]
+The routine searches the "PendingFileRenameOperations" registry value for
+paths containing a specified substring.
+
+Syntax:
+	NSutils::FindPendingFileRenameOperations [/NOUNLOAD] "FileSubstring"
+
+Return values:
+	[Stack] The first path containing the substring, or, an empty string if nothing is found
+
+Example:
+	NSutils::FindPendingFileRenameOperations [/NOUNLOAD] "AppData\Local\Temp"
+	Pop $0 ; First path containing the substring
+	${If} $0 != ""
+		; Path found
+	${Else}
+		; Nothing found
+	${EndIf}
+_______________________________________________________________________________
+
 [DisableProgressStepBack]
 [RestoreProgressStepBack]
 Don't allow the progress bar to step back.

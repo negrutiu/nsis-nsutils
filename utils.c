@@ -996,3 +996,186 @@ void __declspec(dllexport) StopReceivingClicks(
 		}
 	}
 }
+
+
+//++ FindPendingFileRenameOperationsImpl
+DWORD FindPendingFileRenameOperationsImpl(
+	__in LPCTSTR pszFileSubstr,		/// Case insensitive
+	__out LPTSTR pszFirstFile,
+	__in ULONG iFirstFileLen
+	)
+{
+#define REGKEY_PENDING_FILE_OPS	_T("SYSTEM\\CurrentControlSet\\Control\\Session Manager")
+#define REGVAL_PENDING_FILE_OPS _T("PendingFileRenameOperations")
+
+	DWORD err = ERROR_SUCCESS;
+	HKEY hKey;
+	BYTE iMajorVersion = LOBYTE(LOWORD(GetVersion()));
+	BYTE iMinorVersion = HIBYTE(LOWORD(GetVersion()));
+	DWORD dwKeyFlags = 0;
+
+	if ( !pszFileSubstr || !*pszFileSubstr || !pszFirstFile || !iFirstFileLen )
+		return ERROR_INVALID_PARAMETER;
+
+	if ( iMajorVersion > 5 || ( iMajorVersion == 5 && iMinorVersion >= 1 ))		/// XP or newer
+		dwKeyFlags |= KEY_WOW64_64KEY;
+
+	// Read the REG_MULTI_SZ value
+	err = RegOpenKeyEx( HKEY_LOCAL_MACHINE, REGKEY_PENDING_FILE_OPS, 0, KEY_READ | dwKeyFlags, &hKey );
+	if ( err == ERROR_SUCCESS ) {
+		DWORD dwType, dwSize = 0;
+		err = RegQueryValueEx( hKey, REGVAL_PENDING_FILE_OPS, NULL, &dwType, NULL, &dwSize );
+		if ( err == ERROR_SUCCESS && dwType == REG_MULTI_SZ && dwSize > 0 ) {
+			LPTSTR pszValue = (LPTSTR)GlobalAlloc( GMEM_FIXED, dwSize );
+			if ( pszValue ) {
+				err = RegQueryValueEx( hKey, REGVAL_PENDING_FILE_OPS, NULL, &dwType, (LPBYTE)pszValue, &dwSize );
+				if ( err == ERROR_SUCCESS && dwType == REG_MULTI_SZ && dwSize > 0 ) {
+
+					// PendingFileRenameOperations contains pairs of strings (SrcFile, DstFile)
+					// At boot time every SrcFile is renamed to DstFile.
+					// If DstFile is empty, SrcFile is deleted.
+					// (DstFile might start with "!", not sure why...)
+
+					int i;
+					int iLen = (int)(dwSize / sizeof(TCHAR));	/// Registry value length in TCHAR-s
+					int iIndexSrcFile, iIndexDstFile;
+
+					err = ERROR_FILE_NOT_FOUND;		/// Default return value
+					for ( i = 0, iIndexSrcFile = 0, iIndexDstFile = -1; i < iLen; i++ ) {
+
+						if ( pszValue[i] == _T('\0')) {
+
+							if ( iIndexDstFile == -1 ) {
+
+								// At this point we have SrcFile
+								iIndexDstFile = i + 1;	/// Remember where DstFile begins
+
+							} else {
+
+								// At this point we have both, SrcFile and DstFile
+								// We'll test if SrcFile contains our substring
+
+								LPCTSTR pszSrcFile = pszValue + iIndexSrcFile;
+								iIndexSrcFile = i + 1;
+
+								/*/// Ignore "\??\" prefix
+								if ( StrCmpN( pszSrcFile, _T("\\??\\"), 4 ) == 0 )
+									pszSrcFile += 4;*/
+
+								if ( !pszValue[iIndexDstFile] ) {
+
+									if ( StrStrI( pszSrcFile, pszFileSubstr ) != NULL ) {
+										lstrcpyn( pszFirstFile, pszSrcFile, iFirstFileLen );
+										err = ERROR_SUCCESS;
+										break;
+									}
+
+									/*{
+										TCHAR sz[512];
+										wsprintf( sz, _T("Delete( \"%s\" )\n"), pszSrcFile );
+										OutputDebugString( sz );
+									}*/
+
+								} else {
+
+									/// Ignore "!" and "\??\" prefixes
+									LPCTSTR pszDstFile = pszValue + iIndexDstFile;
+									if ( *pszDstFile == _T('!'))
+										pszDstFile++;
+									/*if ( StrCmpN( pszDstFile, _T("\\??\\"), 4 ) == 0 )
+										pszDstFile += 4;*/
+
+									if ( StrStrI( pszSrcFile, pszFileSubstr ) != NULL ) {
+										lstrcpyn( pszFirstFile, pszSrcFile, iFirstFileLen );
+										err = ERROR_SUCCESS;
+										break;
+									}
+									if ( StrStrI( pszDstFile, pszFileSubstr ) != NULL ) {
+										lstrcpyn( pszFirstFile, pszDstFile, iFirstFileLen );
+										err = ERROR_SUCCESS;
+										break;
+									}
+
+									/*{
+										TCHAR sz[512];
+										wsprintf( sz, _T("Rename( \"%s\", \"%s\" )\n"), pszSrcFile, pszDstFile );
+										OutputDebugString( sz );
+									}*/
+								}
+
+								// Index
+								iIndexDstFile = -1;
+							}
+						}
+					}
+				}
+
+				GlobalFree( pszValue );
+
+			} else {
+				err = ERROR_OUTOFMEMORY;
+			}
+		}
+		RegCloseKey( hKey );
+	}
+
+	return err;
+}
+
+
+//
+//  [exported] FindPendingFileRenameOperations
+//  ----------------------------------------------------------------------
+//  Example:
+//    NSutils::FindPendingFileRenameOperations "FileSubstr"
+//    Pop $0 ; First file path containing FileSubstr, or, an empty string if nothing is found
+//    ${If} $0 != ""
+//      ;Found
+//    ${Else}
+//      ;Not found
+//    ${EndIf}
+//
+void __declspec(dllexport) FindPendingFileRenameOperations(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	LPTSTR pszBuf = NULL;
+
+	//	Cache global structures
+	EXDLL_INIT();
+
+	//	Check NSIS API compatibility
+	if ( !IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+	/// Allocate memory large enough to store any NSIS string
+	pszBuf = (TCHAR*)GlobalAlloc( GPTR, sizeof(TCHAR) * string_size );
+	if ( pszBuf ) {
+
+		DWORD err;
+		TCHAR szSubstring[255];
+
+		///	Param1: SrcFileSubstr
+		szSubstring[0] = 0;
+		if ( popstring( pszBuf ) == 0 )
+			lstrcpy( szSubstring, pszBuf );
+
+		// Execute
+		err = FindPendingFileRenameOperationsImpl( szSubstring, pszBuf, string_size );
+		if ( err == ERROR_SUCCESS ) {
+			pushstring( pszBuf );
+		} else {
+			pushstring( _T(""));
+		}
+
+		/// Free memory
+		GlobalFree( pszBuf );
+	}
+}
