@@ -9,13 +9,16 @@ set BUILD_SUCCESSFUL=0
 if defined PROGRAMFILES(X86) set PF=%PROGRAMFILES(X86)%
 if not defined PROGRAMFILES(X86) set PF=%PROGRAMFILES%
 
+set VCVARSALL=%PF%\Microsoft Visual Studio 12.0\VC\VcVarsAll.bat
+if exist "%VCVARSALL%" goto :BUILD
+
 set VCVARSALL=%PF%\Microsoft Visual Studio 11.0\VC\VcVarsAll.bat
 if exist "%VCVARSALL%" goto :BUILD
 
 set VCVARSALL=%PF%\Microsoft Visual Studio 10.0\VC\VcVarsAll.bat
 if exist "%VCVARSALL%" goto :BUILD
 
-echo ERROR: Can't find Visual Studio 2010/2012
+echo ERROR: Can't find Visual Studio 2010/2012/2013
 pause
 goto :EOF
 
