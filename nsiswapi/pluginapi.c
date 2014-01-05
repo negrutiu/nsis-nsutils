@@ -2,6 +2,12 @@
 
 #include "pluginapi.h"
 
+#ifdef _countof
+#define COUNTOF _countof
+#else
+#define COUNTOF(a) (sizeof(a)/sizeof(a[0]))
+#endif
+
 unsigned int g_stringsize = 0;
 stack_t **g_stacktop = NULL;
 TCHAR *g_variables = NULL;
@@ -23,7 +29,7 @@ int NSISCALL popstring(TCHAR *str)
   stack_t *th;
   if (!g_stacktop || !*g_stacktop) return 1;
   th=(*g_stacktop);
-  lstrcpy(str,th->text);
+  if (str) lstrcpy(str,th->text);
   *g_stacktop = th->next;
   GlobalFree((HGLOBAL)th);
   return 0;
@@ -50,7 +56,7 @@ void NSISCALL pushstring(const TCHAR *str)
   *g_stacktop=th;
 }
 
-TCHAR * NSISCALL getuservariable(const int varnum)
+TCHAR* NSISCALL getuservariable(const int varnum)
 {
   if (varnum < 0 || varnum >= __INST_LAST) return NULL;
   return g_variables+varnum*g_stringsize;
@@ -159,14 +165,13 @@ void NSISCALL SetUserVariableW(const int varnum, const wchar_t* wideStr)
       WideCharToMultiByte(CP_ACP, 0, wideStr, -1, ansiStr, g_stringsize, NULL, NULL);
    }
 }
-
 #endif
 
 // playing with integers
 
-int NSISCALL myatoi(const TCHAR *s)
+INT_PTR NSISCALL nsishelper_str_to_ptr(const TCHAR *s)
 {
-  int v=0;
+  INT_PTR v=0;
   if (*s == _T('0') && (s[1] == _T('x') || s[1] == _T('X')))
   {
     s++;
@@ -209,7 +214,7 @@ int NSISCALL myatoi(const TCHAR *s)
   return v;
 }
 
-unsigned NSISCALL myatou(const TCHAR *s)
+unsigned int NSISCALL myatou(const TCHAR *s)
 {
   unsigned int v=0;
 
@@ -275,27 +280,25 @@ int NSISCALL myatoi_or(const TCHAR *s)
   return v;
 }
 
-int NSISCALL popint()
+INT_PTR NSISCALL popintptr()
 {
   TCHAR buf[128];
-  if (popstringn(buf,sizeof(buf)/sizeof(TCHAR)))
+  if (popstringn(buf,COUNTOF(buf)))
     return 0;
-
-  return myatoi(buf);
+  return nsishelper_str_to_ptr(buf);
 }
 
 int NSISCALL popint_or()
 {
   TCHAR buf[128];
-  if (popstringn(buf,sizeof(buf)/sizeof(TCHAR)))
+  if (popstringn(buf,COUNTOF(buf)))
     return 0;
-
   return myatoi_or(buf);
 }
 
-void NSISCALL pushint(int value)
+void NSISCALL pushintptr(INT_PTR value)
 {
-	TCHAR buffer[1024];
-	wsprintf(buffer, _T("%d"), value);
+	TCHAR buffer[30];
+	wsprintf(buffer, sizeof(void*) > 4 ? _T("%Id") : _T("%d"), value);
 	pushstring(buffer);
 }

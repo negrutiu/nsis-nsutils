@@ -60,16 +60,19 @@ extern extra_parameters *g_ep;
 
 BOOL NSISCALL IsCompatibleApiVersion();	// Test if (g_ep->exec_flags->plugin_api_version == NSISPIAPIVER_CURR)
 
+void NSISCALL pushstring(const TCHAR *str);
+void NSISCALL pushintptr(INT_PTR value);
+#define pushint(v) pushintptr((INT_PTR)(v))
 int NSISCALL popstring(TCHAR *str); // 0 on success, 1 on empty stack
 int NSISCALL popstringn(TCHAR *str, int maxlen); // with length limit, pass 0 for g_stringsize
-int NSISCALL popint(); // pops an integer
+INT_PTR NSISCALL popintptr();
+#define popint() ( (int) popintptr() )
 int NSISCALL popint_or(); // with support for or'ing (2|4|8)
-int NSISCALL myatoi(const TCHAR *s); // converts a string to an integer
-unsigned NSISCALL myatou(const TCHAR *s); // converts a string to an unsigned integer, decimal only
+INT_PTR NSISCALL nsishelper_str_to_ptr(const TCHAR *s);
+#define myatoi(s) ( (int) nsishelper_str_to_ptr(s) ) // converts a string to an integer
+unsigned int NSISCALL myatou(const TCHAR *s); // converts a string to an unsigned integer, decimal only
 int NSISCALL myatoi_or(const TCHAR *s); // with support for or'ing (2|4|8)
-void NSISCALL pushstring(const TCHAR *str);
-void NSISCALL pushint(int value);
-TCHAR * NSISCALL getuservariable(const int varnum);
+TCHAR* NSISCALL getuservariable(const int varnum);
 void NSISCALL setuservariable(const int varnum, const TCHAR *var);
 
 #ifdef _UNICODE
