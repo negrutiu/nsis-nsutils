@@ -604,7 +604,7 @@ void __declspec(dllexport) DisableProgressStepBack(
 
 	//	Retrieve NSIS parameters
 	///	Param1: Progress bar handle
-	hProgressBar = (HWND)popint();
+	hProgressBar = (HWND)popintptr();
 	if ( hProgressBar && IsWindow( hProgressBar )) {
 
 		if ( GetProp( hProgressBar, PROP_PROGRESSBAR_NOSTEPBACK ) == NULL ) {	/// Already set?
@@ -646,7 +646,7 @@ void __declspec(dllexport) RestoreProgressStepBack(
 
 	//	Retrieve NSIS parameters
 	///	Param1: Progress bar handle
-	hProgressBar = (HWND)popint();
+	hProgressBar = (HWND)popintptr();
 	if ( hProgressBar && IsWindow( hProgressBar )) {
 
 		if ( GetProp( hProgressBar, PROP_PROGRESSBAR_NOSTEPBACK ) != NULL ) {	/// Ever set?
@@ -688,10 +688,10 @@ void __declspec(dllexport) RedirectProgressBar(
 	//	Retrieve NSIS parameters
 
 	///	Param1: Progress bar handle
-	hProgressBar = (HWND)popint();
+	hProgressBar = (HWND)popintptr();
 
 	///	Param2: Second progress bar handle. If NULL, the redirection is canceled
-	hProgressBar2 = (HWND)popint();
+	hProgressBar2 = (HWND)popintptr();
 
 	if ( hProgressBar && IsWindow( hProgressBar )) {
 
@@ -765,8 +765,8 @@ LRESULT CALLBACK MainWndProc(
 
 				int iNsisCallback = (int)GetProp( hWnd, PROP_BNCLICKED_CALLBACK );
 				if ( iNsisCallback != 0 ) {
-					pushint( LOWORD( wParam ));		/// Button control ID
-					pushint( lParam );				/// Button HWND
+					pushintptr( LOWORD( wParam ));		/// Button control ID
+					pushintptr( lParam );				/// Button HWND
 					g_ep->ExecuteCodeSegment( iNsisCallback - 1, 0 );
 				}
 			}
@@ -944,7 +944,7 @@ void __declspec(dllexport) StartReceivingClicks(
 	//	Retrieve NSIS parameters
 
 	///	Param1: HWND of the buttons' parent
-	hBtnParentWnd = (HWND)popint();
+	hBtnParentWnd = (HWND)popintptr();
 
 	/// Param2: NSIS callback function
 	iCallback = popint();
@@ -986,7 +986,7 @@ void __declspec(dllexport) StopReceivingClicks(
 	//	Retrieve NSIS parameters
 
 	///	Param1: HWND of the buttons' parent
-	hBtnParentWnd = (HWND)popint();
+	hBtnParentWnd = (HWND)popintptr();
 
 	// Stop receiving button clicks
 	if ( hBtnParentWnd && IsWindow( hBtnParentWnd )) {

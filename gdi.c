@@ -440,7 +440,7 @@ void __declspec(dllexport) LoadImageFile(
 
 				// Return HBITMAP on the stack
 				// It must be destroyed by the caller (gdi32!DeleteObject) when no longer needed
-				pushint((int)hBmp );
+				pushintptr((INT_PTR)hBmp );
 
 			} else {
 				pushint( 0 );	/// Load error
