@@ -298,3 +298,20 @@ Example:
 	Pop $0	; HBITMAP
 	...
 	System::Call 'user32::DeleteObject( i $0 )'
+
+_______________________________________________________________________________
+
+[RejectCloseMessages]
+Reject closing window messages such as WM_CLOSE, WM_DESTROY, WM_COMMAND(IDCANCEL), WM_SYSCOMMAND(SC_CLOSE), etc
+All these messages will be blocked regardless of what window they've been sent to
+
+Syntax:
+	NSutils::RejectCloseMessages /NOUNLOAD true|false
+
+Return values:
+	None
+
+Example:
+	NSutils::RejectCloseMessages /NOUNLOAD true
+	...
+	NSutils::RejectCloseMessages /NOUNLOAD false

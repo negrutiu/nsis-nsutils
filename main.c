@@ -1,10 +1,13 @@
 #include <windows.h>
 
-//	Global variables
-///HINSTANCE g_hInst = NULL;
+// Global variables
+HINSTANCE g_hModule = NULL;
+
+// Notifications
+extern VOID UtilsUnload();
 
 //
-//  DllMain
+// DllMain
 //
 BOOL WINAPI DllMain(
 	HINSTANCE hInst,
@@ -13,10 +16,11 @@ BOOL WINAPI DllMain(
 	)
 {
 	if ( ul_reason_for_call == DLL_PROCESS_ATTACH ) {
-		///g_hInst = hInst;
+		g_hModule = hInst;
 		CoInitialize( NULL );
 	} else if ( ul_reason_for_call == DLL_PROCESS_DETACH ) {
-		///g_hInst = NULL;
+		UtilsUnload();
+		g_hModule = NULL;
 		CoUninitialize();
 	}
 	return TRUE;

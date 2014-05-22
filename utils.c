@@ -4,6 +4,24 @@
 #include "nsiswapi\pluginapi.h"
 
 
+// Globals
+extern HINSTANCE g_hModule;				/// Defined in main.c
+HHOOK g_hMessageLoopHook = NULL;
+
+
+// UtilsUnload
+// Called when the plugin unloads
+VOID UtilsUnload()
+{
+	// If still hooked, unhook the message loop
+	if ( g_hMessageLoopHook ) {
+		UnhookWindowsHookEx( g_hMessageLoopHook );
+		g_hMessageLoopHook = NULL;
+		///OutputDebugString( _T("[NSutils::MessageLoopRejectCloseWndProc] auto false\n"));
+	}
+}
+
+
 //++ LogWriteFile
 DWORD LogWriteFile(
 	__in HANDLE hFile,
@@ -1174,6 +1192,133 @@ void __declspec(dllexport) FindPendingFileRenameOperations(
 		} else {
 			pushstring( _T(""));
 		}
+
+		/// Free memory
+		GlobalFree( pszBuf );
+	}
+}
+
+
+//++ MessageLoopRejectCloseWndProc
+LRESULT CALLBACK MessageLoopRejectCloseWndProc( __in int code, __in WPARAM wParam, __in LPARAM lParam )
+{
+	if ( code >= 0 )
+	{
+		LPMSG pMsg = (LPMSG)lParam;
+		switch ( pMsg->message )
+		{
+		case WM_CLOSE:
+			///OutputDebugString( _T("[NSutils::MessageLoopRejectCloseWndProc] WM_CLOSE rejected\n"));
+			pMsg->message = WM_NULL;
+			return 0;
+
+		case WM_QUIT:
+			///OutputDebugString( _T("[NSutils::MessageLoopRejectCloseWndProc] WM_QUIT rejected\n"));
+			pMsg->message = WM_NULL;
+			return 0;
+
+		case WM_COMMAND:
+			switch ( LOWORD(pMsg->wParam))
+			{
+			case IDCANCEL:
+				///OutputDebugString( _T("[NSutils::MessageLoopRejectCloseWndProc] WM_COMMAND(IDCANCEL) rejected\n"));
+				pMsg->message = WM_NULL;
+				return 0;
+
+			case IDYES:
+				///OutputDebugString( _T("[NSutils::MessageLoopRejectCloseWndProc] WM_COMMAND(IDYES) rejected\n"));
+				pMsg->message = WM_NULL;
+				return 0;
+
+			case IDNO:
+				///OutputDebugString( _T("[NSutils::MessageLoopRejectCloseWndProc] WM_COMMAND(IDNO) rejected\n"));
+				pMsg->message = WM_NULL;
+				return 0;
+			}
+			break;
+
+		case WM_SYSCOMMAND:
+			if ( pMsg->wParam == SC_CLOSE ) {
+				///OutputDebugString( _T("[NSutils::MessageLoopRejectCloseWndProc] WM_SYSCOMMAND(SC_CLOSE) rejected\n"));
+				pMsg->message = WM_NULL;
+				return 0;
+			}
+			break;
+
+		case WM_DESTROY:
+			///OutputDebugString( _T("[NSutils::MessageLoopRejectCloseWndProc] WM_DESTROY rejected\n"));
+			pMsg->message = WM_NULL;
+			return 0;
+		}
+	}
+	return CallNextHookEx( g_hMessageLoopHook, code, wParam, lParam );
+}
+
+
+//
+//  [exported] RejectCloseMessages
+//  ----------------------------------------------------------------------
+//  Input:
+//    [Stack] true/false
+//  Output:
+//    None
+//  Example:
+//    NSutils::RejectCloseMessages /NOUNLOAD true
+//    [...]
+//    NSutils::RejectCloseMessages false
+//
+void __declspec(dllexport) RejectCloseMessages(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	LPTSTR pszBuf = NULL;
+
+	// Cache global structures
+	EXDLL_INIT();
+
+	// Check NSIS API compatibility
+	if ( !IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+	/// Allocate memory large enough to store any NSIS string
+	pszBuf = (TCHAR*)GlobalAlloc( GPTR, sizeof(TCHAR) * string_size );
+	if ( pszBuf ) {
+
+		DWORD err = ERROR_SUCCESS;
+		TCHAR szParam1[255];
+
+		///	Param1: true/false
+		szParam1[0] = 0;
+		if ( popstring( pszBuf ) == 0 )
+			lstrcpy( szParam1, pszBuf );
+
+		// Execute
+		if ( lstrcmpi( szParam1, _T("true")) == 0 ) {
+
+			if ( !g_hMessageLoopHook ) {
+				///OutputDebugString( _T("[NSutils::MessageLoopRejectCloseWndProc] true\n"));
+				g_hMessageLoopHook = SetWindowsHookEx( WH_GETMESSAGE, MessageLoopRejectCloseWndProc, g_hModule, 0 );
+				if ( !g_hMessageLoopHook )
+					err = GetLastError();
+			}
+
+		} else if ( lstrcmpi( szParam1, _T("false")) == 0 ) {
+
+			if ( g_hMessageLoopHook ) {
+				///OutputDebugString( _T("[NSutils::MessageLoopRejectCloseWndProc] false\n"));
+				if ( !UnhookWindowsHookEx( g_hMessageLoopHook ))
+					err = GetLastError();
+				g_hMessageLoopHook = NULL;
+			}
+		}
+
 
 		/// Free memory
 		GlobalFree( pszBuf );
