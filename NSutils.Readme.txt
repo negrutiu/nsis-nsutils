@@ -315,3 +315,21 @@ Example:
 	NSutils::RejectCloseMessages /NOUNLOAD true
 	...
 	NSutils::RejectCloseMessages /NOUNLOAD false
+_______________________________________________________________________________
+
+[CloseFileHandles]
+Close all opened handles to the specified file or folder.
+Be mindful of the file system redirection on 64-bit platforms!
+
+Syntax:
+	NSutils::ExecutePendingFileRenameOperations [/NOUNLOAD] "File"
+
+Return values:
+	The number of closed handles
+
+Example:
+	${DisableX64FSRedirection}	; Optional. On 64-bit platforms, read from System32 rather than SysWOW64
+	NSutils::CloseFileHandles /NOUNLOAD "$SYSDIR\drivers\etc\hosts"
+	${EnableX64FSRedirection}
+	Pop $0
+	MessageBox MB_OK "$0 handles were closed"

@@ -49,18 +49,6 @@ ShowInstDetails show
 !endif
 
 Function .onInit
-
-/*
-	NSutils::ExecutePendingFileRenameOperations "Update\Flags\Pending"
-	Pop $0	; Win32 error code
-	Pop $1	; File operations Win32 error code
-	MessageBox MB_OK 'ExecutePendingFileRenameOperations( "Update\Flags\Pending" )$\nError: $0$\nFile Operation Error: $1'
-
-	NSutils::ExecutePendingFileRenameOperations "PendingBullGuardUpdate"
-	Pop $0
-	Pop $1
-	MessageBox MB_OK 'ExecutePendingFileRenameOperations( "PendingBullGuardUpdate" )$\nError: $0$\nFile Operation Error: $1'
-*/
 FunctionEnd
 
 Function PrintFileVersion
@@ -163,7 +151,7 @@ Section /o "Test progress bar (default, steping back)"
 SectionEnd
 
 
-Section /o "Test progress bar (fixed, no step back)"
+Section /o "Test progress bar (fixed, no stepping back)"
 
 	NSutils::DisableProgressStepBack /NOUNLOAD $mui.InstFilesPage.ProgressBar
 	${Print} "--------------------------------------------------------------"
@@ -297,6 +285,30 @@ Section /o "Test string table manipulation"
 	${EndIf}
 
 	Delete "$DESKTOP\MyTest.exe"
+
+SectionEnd
+
+
+Section /o "Test close file handles"
+
+	${Print} "--------------------------------------------------------------"
+	${DisableX64FSRedirection}
+
+	${Print} 'Close "hosts" file handles'
+	;Push "$SYSDIR\drivers\etc\hosts"
+	;CallInstDLL "$EXEDIR\..\DebugW\NSutils.dll" CloseFileHandles
+	NSutils::CloseFileHandles /NOUNLOAD "$SYSDIR\drivers\etc\hosts"
+	Pop $0
+	${Print} '  $0 closed'
+
+	${Print} 'Close "$DESKTOP\test.txt" file handles'
+	;Push "$DESKTOP\test.txt"
+	;CallInstDLL "$EXEDIR\..\DebugW\NSutils.dll" CloseFileHandles
+	NSutils::CloseFileHandles /NOUNLOAD "$DESKTOP\test.txt"
+	Pop $0
+	${Print} '  $0 closed'
+
+	${EnableX64FSRedirection}
 
 SectionEnd
 
