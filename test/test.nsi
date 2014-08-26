@@ -17,6 +17,8 @@
 	!AddPluginDir "..\ReleaseA"
 !endif
 
+!define ERROR_SUCCESS 0
+
 SpaceTexts "none"
 !define MUI_COMPONENTSPAGE_NODESC
 !insertmacro MUI_PAGE_COMPONENTS
@@ -309,6 +311,114 @@ Section /o "Test close file handles"
 	${Print} '  $0 closed'
 
 	${EnableX64FSRedirection}
+
+SectionEnd
+
+
+Section /o "Test REG_MULTI_SZ operations"
+
+	${Print} "--------------------------------------------------------------"
+	${Print} "REG_MULTI_SZ tests"
+
+	SetRegView 64
+	DeleteRegValue HKCU "Software\MyCompany" "MyValue"
+	DeleteRegKey HKCU "Software\MyCompany"
+
+	; Insert
+	NSutils::RegMultiSzInsertAfter /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "ccc" ""
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} '  RegMultiSzInsert( "ccc" after "" ) = $0'
+
+	NSutils::RegMultiSzInsertBefore /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "bbb" "ccc"
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} '  RegMultiSzInsert( "bbb" before "ccc" ) = $0'
+
+	NSutils::RegMultiSzInsertAfter /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "ddd" "ccc"
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} '  RegMultiSzInsert( "ddd" after "ccc" ) = $0'
+
+	NSutils::RegMultiSzInsertAtIndex /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "aaa" 0
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} '  RegMultiSzInsert( "ddd" at index 0 ) = $0'
+
+	NSutils::RegMultiSzInsertAtIndex /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "eee" 4
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} '  RegMultiSzInsert( "eee" at index 4 ) = $0'
+
+	; Verify
+	${For} $1 0 1000
+		NSutils::RegMultiSzRead /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 $1
+		Pop $0	; Win32 error
+		Pop $2	; The substring
+		IntFmt $0 "0x%x" $0
+		StrCpy $3 ""
+		${If} $0 = ${ERROR_SUCCESS}
+			${If} $1 = 0
+				StrCpy $3 "[CORRECT]"
+				StrCmp $2 "aaa" +2 +1
+					StrCpy $3 "[INCORRECT]"
+			${ElseIf} $1 = 1
+				StrCpy $3 "[CORRECT]"
+				StrCmp $2 "bbb" +2 +1
+					StrCpy $3 "[INCORRECT]"
+			${ElseIf} $1 = 2
+				StrCpy $3 "[CORRECT]"
+				StrCmp $2 "ccc" +2 +1
+					StrCpy $3 "[INCORRECT]"
+			${ElseIf} $1 = 3
+				StrCpy $3 "[CORRECT]"
+				StrCmp $2 "ddd" +2 +1
+					StrCpy $3 "[INCORRECT]"
+			${ElseIf} $1 = 4
+				StrCpy $3 "[CORRECT]"
+				StrCmp $2 "eee" +2 +1
+					StrCpy $3 "[INCORRECT]"
+			${EndIf}
+		${EndIf}
+		${Print} '  RegMultiSzRead( $1 ) = $0: "$2" $3'
+		IntCmp $0 ${ERROR_SUCCESS} +2 +1 +1
+			${Break}
+	${Next}
+
+	; Delete
+	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "ccc" ${TRUE}
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} '  RegMultiSzDelete( "ccc" ) = $0'
+
+	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "bbb" ${TRUE}
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} '  RegMultiSzDelete( "bbb" ) = $0'
+
+	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "aaa" ${TRUE}
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} '  RegMultiSzDelete( "aaa" ) = $0'
+
+	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "ddd" ${TRUE}
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} '  RegMultiSzDelete( "ddd" ) = $0'
+
+	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "eee" ${TRUE}
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} '  RegMultiSzDelete( "eee" ) = $0'
+
+	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "xxx" ${TRUE}
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} '  RegMultiSzDelete( "xxx" ) = $0'
+
+	DeleteRegValue HKCU "Software\MyCompany" "MyValue"
+	DeleteRegKey HKCU "Software\MyCompany"
+	SetRegView 32
 
 SectionEnd
 

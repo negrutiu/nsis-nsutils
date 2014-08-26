@@ -333,3 +333,57 @@ Example:
 	${EnableX64FSRedirection}
 	Pop $0
 	MessageBox MB_OK "$0 handles were closed"
+_______________________________________________________________________________
+
+[RegMultiSzInsertBefore]
+[RegMultiSzInsertAfter]
+[RegMultiSzInsertAtIndex]
+Insert a substring to a REG_MULTI_SZ registry value
+
+Syntax:
+	NSutils::RegMultiSzInsertBefore  [/NOUNLOAD] "RegKeyName" "RegValueName" KeyFlags "InsertStr" "InsertBeforeStr"
+	NSutils::RegMultiSzInsertAfter   [/NOUNLOAD] "RegKeyName" "RegValueName" KeyFlags "InsertStr" "InsertAfterStr"
+	NSutils::RegMultiSzInsertAtIndex [/NOUNLOAD] "RegKeyName" "RegValueName" KeyFlags "InsertStr" Index
+
+Return value:
+	[Stack] Win32 error
+
+Examples:
+	NSutils::RegMultiSzInsertBefore  /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} "Line 4" "Line 5"
+	Pop $0	; Win32 error
+	NSutils::RegMultiSzInsertAfter   /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} "Line 4" "Line 3"
+	Pop $0	; Win32 error
+	NSutils::RegMultiSzInsertAtIndex /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} "Line 4" 3
+	Pop $0	; Win32 error
+_______________________________________________________________________________
+
+[RegMultiSzDelete]
+Delete a substring from a REG_MULTI_SZ registry value
+
+Syntax:
+	NSutils::RegMultiSzDelete [/NOUNLOAD] "RegKeyName" "RegValueName" KeyFlags "DeleteStr" RemoveValueIfEmpty
+
+Return value:
+	[Stack] Win32 error
+
+Example:
+	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} "Line 4" ${TRUE}
+	Pop $0	; Win32 error
+_______________________________________________________________________________
+
+[RegMultiSzRead]
+Read a substring from a REG_MULTI_SZ registry value
+
+Syntax:
+	NSutils::RegMultiSzRead [/NOUNLOAD] "RegKeyName" "RegValueName" KeyFlags Index
+
+Return value:
+	[Stack] Win32 error
+	[Stack] The substring, or an empty string in case of errors
+
+Example:
+	NSutils::RegMultiSzRead /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} 2
+	Pop $0	; Win32 error
+	Pop $1	; Substring at index 2
+_______________________________________________________________________________
+
