@@ -2,6 +2,7 @@
 #include <CommCtrl.h>
 #include <Shlwapi.h>
 #include "nsiswapi\pluginapi.h"
+#include <intrin.h>
 
 
 // Globals
@@ -1326,6 +1327,7 @@ void __declspec(dllexport) RejectCloseMessages(
 }
 
 
+//++ DosPathToSystemPath
 DWORD DosPathToSystemPath( __inout LPTSTR pszPath, __in DWORD iPathLen )
 {
 	DWORD err = ERROR_SUCCESS;
@@ -1359,6 +1361,7 @@ DWORD DosPathToSystemPath( __inout LPTSTR pszPath, __in DWORD iPathLen )
 }
 
 
+//++ CloseFileHandlesImpl
 ULONG CloseFileHandlesImpl(
 	__in LPCTSTR pszHandleName,
 	__out_opt PULONG piClosedCount
@@ -2383,4 +2386,70 @@ void __declspec(dllexport) RegMultiSzRead(
 	/// Return value
 	pushstring( szSubstr );
 	pushintptr( err );
+}
+
+
+//
+//  [exported] CPUID
+//  ----------------------------------------------------------------------
+//  Input:
+//    [Stack] CPUID Function ID (such as 1, 2, 0x80000001, etc.)
+//  Output:
+//    [Stack] EAX
+//    [Stack] EBX
+//    [Stack] ECX
+//    [Stack] EEX
+//  Example:
+//    NSutils::CPUID /NOUNLOAD 1
+//    Pop $1	; EAX
+//    Pop $2	; EBX
+//    Pop $3	; ECX
+//    Pop $4	; EDX
+//    IntOp $0 $4 & 0x4000000	; Check EDX, bit 26
+//    ${If} $0 <> 0
+//        DetailPrint "CPU supports SSE2"
+//    ${EndIf}
+//
+void __declspec(dllexport) CPUID(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	DWORD err = ERROR_SUCCESS;
+	UINT iFnId;
+	UINT regs[4];	/// {EAX, EBX, ECX, EDX}
+
+	// Cache global structures
+	EXDLL_INIT();
+
+	// Check NSIS API compatibility
+	if (!IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	// Input
+	iFnId = (UINT)popint();
+
+	// CPUID
+	if (iFnId < 0x80000000) {
+		/// Standard functions
+		__cpuid( regs, 0 );
+		if (iFnId > 0 && iFnId <= regs[0])
+			__cpuidex( regs, iFnId, 0 );
+	} else {
+		/// Extended functions
+		__cpuid( regs, 0x80000000 );
+		if (iFnId > 0x80000000 && iFnId <= regs[0])
+			__cpuidex( regs, iFnId, 0 );
+	}
+
+	// Output
+	pushint( regs[3] );	/// EDX
+	pushint( regs[2] );	/// ECX
+	pushint( regs[1] );	/// EBX
+	pushint( regs[0] );	/// EAX
 }

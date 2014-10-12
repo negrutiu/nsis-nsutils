@@ -387,3 +387,28 @@ Example:
 	Pop $1	; Substring at index 2
 _______________________________________________________________________________
 
+[CPUID]
+Retrieve CPU capabilities
+
+Syntax:
+	NSutils::CPUID [/NOUNLOAD] FuncId
+
+Return values:
+	[Stack] EAX
+	[Stack] EBX
+	[Stack] ECX
+	[Stack] EDX
+
+Example:
+	; Check SSE2 availability (Function 1, EDX, bit 26)
+	NSutils::CPUID /NOUNLOAD 1
+	Pop $1	; EAX
+	Pop $2	; EBX
+	Pop $3	; ECX
+	Pop $4	; EDX
+	IntOp $0 $4 & 0x4000000
+	${If} $0 <> 0
+		DetailPrint "CPU supports SSE2"
+	${EndIf}
+_______________________________________________________________________________
+

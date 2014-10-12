@@ -423,6 +423,57 @@ Section /o "Test REG_MULTI_SZ operations"
 SectionEnd
 
 
+!macro CPUID_PRINT_FEATURE _Feature _Reg _Mask
+	IntOp $0 ${_Reg} & ${_Mask}
+	${If} $0 <> 0
+		${Print} '  [*] ${_Feature}'
+	${Else}
+		${Print} '  [ ] ${_Feature}'
+	${EndIf}
+!macroend
+
+Section /o "CPUID"
+	${Print} "--------------------------------------------------------------"
+	${Print} "CPUID tests"
+
+	!define MASK_MMX	0x800000		; EDX1
+	!define MASK_SSE	0x2000000		; EDX1
+	!define MASK_SSE2	0x4000000		; EDX1
+	!define MASK_SSE3	0x1				; ECX1
+	!define MASK_SSSE3	0x200			; ECX1
+	!define MASK_SSE41	0x80000			; ECX1
+	!define MASK_SSE42	0x100000		; ECX1
+	!define MASK_3DNOW	0x80000000		; EDX81
+	!define MASK_3DNOWX	0x40000000		; EDX81
+	!define MASK_LM		0x20000000		; EDX81
+
+	NSutils::CPUID /NOUNLOAD 1
+	Pop $1	; EAX
+	Pop $2	; EBX
+	Pop $3	; ECX
+	Pop $4	; EDX
+
+	!insertmacro CPUID_PRINT_FEATURE "MMX" $4 ${MASK_MMX}
+	!insertmacro CPUID_PRINT_FEATURE "SSE" $4 ${MASK_SSE}
+	!insertmacro CPUID_PRINT_FEATURE "SSE2" $4 ${MASK_SSE2}
+	!insertmacro CPUID_PRINT_FEATURE "SSE3" $3 ${MASK_SSE3}
+	!insertmacro CPUID_PRINT_FEATURE "Supplemental SSE3" $3 ${MASK_SSSE3}
+	!insertmacro CPUID_PRINT_FEATURE "SSE4.1" $3 ${MASK_SSE41}
+	!insertmacro CPUID_PRINT_FEATURE "SSE4.2" $3 ${MASK_SSE42}
+
+	NSutils::CPUID /NOUNLOAD 0x80000001
+	Pop $1	; EAX
+	Pop $2	; EBX
+	Pop $3	; ECX
+	Pop $4	; EDX
+
+	!insertmacro CPUID_PRINT_FEATURE "3DNow!" $4 ${MASK_3DNOW}
+	!insertmacro CPUID_PRINT_FEATURE "Extended 3DNow!" $4 ${MASK_3DNOWX}
+	!insertmacro CPUID_PRINT_FEATURE "64BIT" $4 ${MASK_LM}
+
+SectionEnd
+
+
 Section "-Cleanup"
 	; Make sure NSutils is not loaded (in case all previous calls were made with /NOUNLOAD)
 	NSutils::DisableProgressStepBack 0	; Dummy call. No effect.
