@@ -115,7 +115,6 @@ BOOL PrepareBitmapForAlphaBlend( __inout HBITMAP hBmp )
 			if ( bm.bmBitsPixel == 32 ) {
 
 				int x, y;
-				double dFactor;
 				LPRGBQUAD pBits;
 
 				// Make a quick pass and check whether the alpha channel is used at all.
@@ -132,21 +131,20 @@ BOOL PrepareBitmapForAlphaBlend( __inout HBITMAP hBmp )
 
 				// Get direct access to bitmap's bits
 				pBits = (LPRGBQUAD)bm.bmBits;
-				if ( bHasAlphaChannel ) {
+				if (bHasAlphaChannel) {
 					// Pre-multiply the color channels the way AlphBlend is expecting
-					for ( y = 0; y < bm.bmHeight; y++ ) {
-						for ( x = 0; x < bm.bmWidth; x++ ) {
-							dFactor         = pBits->rgbReserved / 255.0F;
-							pBits->rgbRed   = (BYTE)(pBits->rgbRed   * dFactor);
-							pBits->rgbGreen = (BYTE)(pBits->rgbGreen * dFactor);
-							pBits->rgbBlue  = (BYTE)(pBits->rgbBlue  * dFactor);
+					for (y = 0; y < bm.bmHeight; y++) {
+						for (x = 0; x < bm.bmWidth; x++) {
+							pBits->rgbRed = (BYTE)(((LONG)pBits->rgbRed * pBits->rgbReserved) >> 8);
+							pBits->rgbGreen = (BYTE)(((LONG)pBits->rgbGreen * pBits->rgbReserved) >> 8);
+							pBits->rgbBlue = (BYTE)(((LONG)pBits->rgbBlue * pBits->rgbReserved) >> 8);
 							pBits++;
 						}
 					}
 				} else {
-					// Just set the alpha channel to 255 (full opacity)
-					for ( y = 0; y < bm.bmHeight; y++ ) {
-						for ( x = 0; x < bm.bmWidth; x++ ) {
+					// Simply set the alpha channel to 255 (full opacity)
+					for (y = 0; y < bm.bmHeight; y++) {
+						for (x = 0; x < bm.bmWidth; x++) {
 							pBits->rgbReserved = 255;
 							pBits++;
 						}
