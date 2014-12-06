@@ -10,10 +10,14 @@
 !include "x64.nsh"
 !include "FileFunc.nsh"
 
+;!define DEBUGGING_ENABLED
+
 # The folder where NSutils.dll is
 !ifdef NSIS_UNICODE
+	!define NSUTILS "$EXEDIR\..\DebugW\NSutils.dll"		; DEBUGGING_ENABLED
 	!AddPluginDir "..\ReleaseW"
 !else
+	!define NSUTILS "$EXEDIR\..\DebugA\NSutils.dll"		; DEBUGGING_ENABLED
 	!AddPluginDir "..\ReleaseA"
 !endif
 
@@ -420,6 +424,42 @@ Section /o "Test REG_MULTI_SZ operations"
 	DeleteRegKey HKCU "Software\MyCompany"
 	SetRegView 32
 
+SectionEnd
+
+
+Section /o "Test compare files"
+	${Print} "--------------------------------------------------------------"
+	${Print} "Test compare files"
+
+!ifdef DEBUGGING_ENABLED
+	Push "C:\Windows\inf\setupapi.setup.log"
+	Push "C:\Windows\inf\setupapi.dev.log"
+	CallInstDLL "${NSUTILS}" CompareFiles
+!else
+	NSutils::CompareFiles /NOUNLOAD "C:\Windows\inf\setupapi.dev.log" "C:\Windows\inf\setupapi.setup.log"
+!endif
+	Pop $0
+	${Print} "  CompareFiles ( setupapi.dev.log, setupapi.setup.log ) == (BOOL)$0"
+
+!ifdef DEBUGGING_ENABLED
+	Push "C:\Windows\inf\setupapi.dev.log"
+	Push "C:\Windows\inf\setupapi.dev.log"
+	CallInstDLL "${NSUTILS}" CompareFiles
+!else
+	NSutils::CompareFiles /NOUNLOAD "C:\Windows\inf\setupapi.dev.log" "C:\Windows\inf\setupapi.dev.log"
+!endif
+	Pop $0
+	${Print} "  CompareFiles ( setupapi.dev.log, setupapi.dev.log ) == (BOOL)$0"
+
+!ifdef DEBUGGING_ENABLED
+	Push "C:\Windows\inf\setupapi.invalid.log"
+	Push "C:\Windows\inf\setupapi.dev.log"
+	CallInstDLL "${NSUTILS}" CompareFiles
+!else
+	NSutils::CompareFiles /NOUNLOAD "C:\Windows\inf\setupapi.dev.log" "C:\Windows\inf\setupapi.invalid.log"
+!endif
+	Pop $0
+	${Print} "  CompareFiles ( setupapi.dev.log, setupapi.invalid.log ) == (BOOL)$0"
 SectionEnd
 
 

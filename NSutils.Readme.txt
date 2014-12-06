@@ -412,3 +412,19 @@ Example:
 	${EndIf}
 _______________________________________________________________________________
 
+[CompareFiles]
+Test whether two files are identical
+
+Syntax:
+	NSutils::CompareFiles [/NOUNLOAD] File1 File2
+
+Return value:
+	[Stack] 0/1
+
+Example:
+	NSutils::CompareFiles /NOUNLOAD "C:\MyFile1.txt" "C:\MyFile2.txt"
+	Pop $0
+	${If} $0 = ${TRUE}
+		DetailPrint "Files are identical"
+	${EndIf}
+_______________________________________________________________________________

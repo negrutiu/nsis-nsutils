@@ -2453,3 +2453,92 @@ void __declspec(dllexport) CPUID(
 	pushint( regs[1] );	/// EBX
 	pushint( regs[0] );	/// EAX
 }
+
+
+//
+//  [exported] CompareFiles
+//  ----------------------------------------------------------------------
+//  Input:
+//    [Stack] File1
+//    [Stack] File2
+//  Output:
+//    [Stack] TRUE/FALSE
+//
+void __declspec(dllexport) CompareFiles(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	BOOL bEqual = FALSE;
+
+	//	Cache global structures
+	EXDLL_INIT();
+
+	//	Check NSIS API compatibility
+	if (!IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+	/// Allocate memory large enough to store any NSIS string
+	LPTSTR pszFile1 = (TCHAR*)GlobalAlloc( GPTR, sizeof( TCHAR ) * string_size );
+	if (pszFile1 && (popstring( pszFile1 ) == 0)) {
+		LPTSTR pszFile2 = (TCHAR*)GlobalAlloc( GPTR, sizeof( TCHAR ) * string_size );
+		if (pszFile2 && (popstring( pszFile2 ) == 0)) {
+
+			/// Compare file sizes
+			WIN32_FILE_ATTRIBUTE_DATA attr1, attr2;
+			if (GetFileAttributesEx( pszFile1, GetFileExInfoStandard, &attr1 ) && GetFileAttributesEx( pszFile2, GetFileExInfoStandard, &attr2 )) {
+				if (attr1.nFileSizeLow == attr2.nFileSizeLow && attr1.nFileSizeHigh == attr2.nFileSizeHigh) {
+
+					/// Equal file sizes. Compare the content
+					HANDLE hFile1 = CreateFile( pszFile1, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL );
+					if (hFile1 != INVALID_HANDLE_VALUE) {
+						HANDLE hFile2 = CreateFile( pszFile2, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL );
+						if (hFile2 != INVALID_HANDLE_VALUE) {
+
+							BYTE buf1[1024], buf2[1024];
+							DWORD size1, size2;
+
+							while (TRUE) {
+								if (ReadFile( hFile1, buf1, sizeof( buf1 ), &size1, NULL ) && ReadFile( hFile2, buf2, sizeof( buf2 ), &size2, NULL )) {
+									if (size1 == size2) {
+										if (size1 > 0) {
+											/// Compare buffers
+											ULONG i;
+											for (i = 0; i < size1; i++)
+												if (buf1[i] != buf2[i])
+													break;
+											if (i < size1) {
+												break;	/// Different
+											}
+										} else {
+											/// Reached EOF
+											bEqual = TRUE;
+											break;	/// Equal
+										}
+									} else {
+										break;	/// Different
+									}
+								}
+							}
+
+							CloseHandle( hFile2 );
+						}
+						CloseHandle( hFile1 );
+					}
+				} else {
+					/// File sizes differ. No need to compare the content
+				}
+			}
+			GlobalFree( pszFile2 );
+		}
+		GlobalFree( pszFile1 );
+	}
+
+	pushint( bEqual );		/// Return value
+}
