@@ -442,10 +442,12 @@ Input:
 
 Output:
 	[Stack] Win32/HRESULT
+	[Stack] Removed policy count
 
 Example:
 	NSutils::RemoveSoftwareRestrictionPolicies /NOUNLOAD "MyApp" "$EXEDIR\MyLog.txt"
-	Pop $0
+	Pop $0  ; Error
+	Pop $1  ; Removed count
 	${If} $0 = 0
 		; Success
 	${EndIf}

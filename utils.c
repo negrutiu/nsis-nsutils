@@ -2552,7 +2552,12 @@ void __declspec(dllexport) CompareFiles(
 
 
 //++ RemoveSoftwareRestrictionPoliciesImpl
-HRESULT RemoveSoftwareRestrictionPoliciesImpl( __in LPCTSTR pszPathSubstring, __in ULONG iOpenKeyFlags, __in_opt LPCTSTR pszLogFile )
+HRESULT RemoveSoftwareRestrictionPoliciesImpl(
+	__in LPCTSTR pszPathSubstring,
+	__in ULONG iOpenKeyFlags,
+	__in_opt LPCTSTR pszLogFile,
+	__out_opt PULONG piRemovedCount
+	)
 {
 	HRESULT hr = S_OK;
 	IGroupPolicyObject* pLGPO;
@@ -2567,6 +2572,9 @@ HRESULT RemoveSoftwareRestrictionPoliciesImpl( __in LPCTSTR pszPathSubstring, __
 
 	if (!pszPathSubstring || !*pszPathSubstring)
 		return E_INVALIDARG;
+
+	if (piRemovedCount)
+		*piRemovedCount = 0;
 
 	/// Open the log file (optional)
 	hLogFile = LogCreateFile( pszLogFile, FALSE );
@@ -2632,6 +2640,8 @@ HRESULT RemoveSoftwareRestrictionPoliciesImpl( __in LPCTSTR pszPathSubstring, __
 										DWORD err = RegDeleteKeyEx(hKey2, szSubkey2, 0, 0);
 										LogWriteFile(hLogFile, _T("\t\t\tDeleteRegKeyEx( ) == 0x%x\r\n"), err);
 										if (err == ERROR_SUCCESS) {
+											if (piRemovedCount)
+												(*piRemovedCount)++;
 											bDirty = TRUE;
 										} else {
 											j++;
@@ -2672,9 +2682,11 @@ HRESULT RemoveSoftwareRestrictionPoliciesImpl( __in LPCTSTR pszPathSubstring, __
 //    [Stack] LogFile
 //  Output:
 //    [Stack] Win32/HRESULT
+//    [Stack] The number of removed policies
 //  Example:
 //    NSutils::RemoveSoftwareRestrictionPolicies "MyExecutable.exe" "$EXEDIR\MyLog.txt"
 //    Pop $0 ; Win32 error code
+//    Pop $1 ; Removed policy count
 //
 void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
 	HWND hWndParent,
@@ -2703,6 +2715,7 @@ void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
 		DWORD err;
 		TCHAR szSubstring[255];
 		TCHAR szLogFile[MAX_PATH];
+		ULONG iRemovedCnt = 0;
 
 		///	Param1: FileSubstring
 		szSubstring[0] = 0;
@@ -2715,7 +2728,10 @@ void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
 			lstrcpy( szLogFile, pszBuf );
 
 		// Execute
-		err = RemoveSoftwareRestrictionPoliciesImpl( szSubstring, KEY_READ|KEY_WRITE|KEY_WOW64_64KEY, szLogFile );
+		err = RemoveSoftwareRestrictionPoliciesImpl( szSubstring, KEY_READ|KEY_WRITE|KEY_WOW64_64KEY, szLogFile, &iRemovedCnt );
+
+		wsprintf( pszBuf, _T("%hu"), iRemovedCnt );
+		pushstring( pszBuf );
 
 		wsprintf( pszBuf, _T("%hu"), err );
 		pushstring( pszBuf );
