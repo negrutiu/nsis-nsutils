@@ -428,3 +428,25 @@ Example:
 		DetailPrint "Files are identical"
 	${EndIf}
 _______________________________________________________________________________
+
+[RemoveSoftwareRestrictionPolicies]
+This routine enumerates software restriction policies and removes the ones that
+match a substring.
+
+Syntax:
+	NSutils::RemoveSoftwareRestrictionPolicies [/NOUNLOAD] "FileSubstring" "LogFile"
+
+Input:
+	[Param] FileSubstring. All policies having this substring in their path will be removed
+	[Param] LogFile. Optional
+
+Output:
+	[Stack] Win32/HRESULT
+
+Example:
+	NSutils::RemoveSoftwareRestrictionPolicies /NOUNLOAD "MyApp" "$EXEDIR\MyLog.txt"
+	Pop $0
+	${If} $0 = 0
+		; Success
+	${EndIf}
+_______________________________________________________________________________

@@ -5,6 +5,12 @@
 #include <intrin.h>
 
 
+#define CINTERFACE
+#include <prsht.h>
+#include <GPEdit.h>
+#pragma comment (lib, "GPEdit.lib")
+
+
 // Globals
 extern HINSTANCE g_hModule;				/// Defined in main.c
 HHOOK g_hMessageLoopHook = NULL;
@@ -496,12 +502,12 @@ void __declspec(dllexport) ExecutePendingFileRenameOperations(
 		TCHAR szSubstring[255];
 		TCHAR szLogFile[MAX_PATH];
 
-		///	Param1: SrcFileSubstr
+		///	Param1: FileSubstring
 		szSubstring[0] = 0;
 		if ( popstring( pszBuf ) == 0 )
 			lstrcpy( szSubstring, pszBuf );
 
-		///	Param2: SrcFileSubstr
+		///	Param2: LogFile
 		szLogFile[0] = 0;
 		if ( popstring( pszBuf ) == 0 )
 			lstrcpy( szLogFile, pszBuf );
@@ -2473,6 +2479,7 @@ void __declspec(dllexport) CompareFiles(
 	)
 {
 	BOOL bEqual = FALSE;
+	LPTSTR pszFile1;
 
 	//	Cache global structures
 	EXDLL_INIT();
@@ -2485,7 +2492,7 @@ void __declspec(dllexport) CompareFiles(
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
-	LPTSTR pszFile1 = (TCHAR*)GlobalAlloc( GPTR, sizeof( TCHAR ) * string_size );
+	pszFile1 = (TCHAR*)GlobalAlloc( GPTR, sizeof( TCHAR ) * string_size );
 	if (pszFile1 && (popstring( pszFile1 ) == 0)) {
 		LPTSTR pszFile2 = (TCHAR*)GlobalAlloc( GPTR, sizeof( TCHAR ) * string_size );
 		if (pszFile2 && (popstring( pszFile2 ) == 0)) {
@@ -2541,4 +2548,179 @@ void __declspec(dllexport) CompareFiles(
 	}
 
 	pushint( bEqual );		/// Return value
+}
+
+
+//++ RemoveSoftwareRestrictionPoliciesImpl
+HRESULT RemoveSoftwareRestrictionPoliciesImpl( __in LPCTSTR pszPathSubstring, __in ULONG iOpenKeyFlags, __in_opt LPCTSTR pszLogFile )
+{
+	HRESULT hr = S_OK;
+	IGroupPolicyObject* pLGPO;
+	BOOL bDirty = FALSE;
+	HANDLE hLogFile;
+
+	const IID my_IID_IGroupPolicyObject = { 0xea502723, 0xa23d, 0x11d1, {0xa7, 0xd3, 0x0, 0x0, 0xf8, 0x75, 0x71, 0xe3} };
+	const IID my_CLSID_GroupPolicyObject = { 0xea502722, 0xa23d, 0x11d1, {0xa7, 0xd3, 0x0, 0x0, 0xf8, 0x75, 0x71, 0xe3} };
+
+	/// NOTE: COM must be already initialized!
+	/// NOTE: CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+	if (!pszPathSubstring || !*pszPathSubstring)
+		return E_INVALIDARG;
+
+	/// Open the log file (optional)
+	hLogFile = LogCreateFile( pszLogFile, FALSE );
+	LogWriteFile( hLogFile, _T("RemoveSoftwareRestrictionPolicies( \"%s\" ) {\r\n"), pszPathSubstring );
+
+	iOpenKeyFlags |= KEY_READ;		/// KEY_READ is mandatory
+
+	hr = CoCreateInstance( &my_CLSID_GroupPolicyObject, NULL, CLSCTX_INPROC_SERVER, &my_IID_IGroupPolicyObject, (LPVOID*)&pLGPO );
+	LogWriteFile(hLogFile, _T("\tCoCreateInstance( CLSID_GroupPolicyObject ) == 0x%x\r\n"), hr);
+	if (SUCCEEDED(hr)) {
+		hr = pLGPO->lpVtbl->OpenLocalMachineGPO(pLGPO, GPO_OPEN_LOAD_REGISTRY);
+		LogWriteFile(hLogFile, _T("\tOpenLocalMachineGPO( GPO_OPEN_LOAD_REGISTRY ) == 0x%x\r\n"), hr);
+		if (SUCCEEDED(hr)) {
+			HKEY hLGPOkey;
+			hr = pLGPO->lpVtbl->GetRegistryKey(pLGPO, GPO_SECTION_MACHINE, &hLGPOkey);
+			LogWriteFile(hLogFile, _T("\tGetRegistryKey( GPO_SECTION_MACHINE ) == 0x%x\r\n"), hr);
+			if (SUCCEEDED(hr)) {
+				/// NOTES:
+				/// LGPO registry key looks like "HKCU\Software\Microsoft\Windows\CurrentVersion\Group Policy Objects\{GUID}\Machine"
+				/// We will enumerate the subkeys "...\SOFTWARE\Policies\Microsoft\Windows\Safer\CodeIdentifiers\*\Paths\*" and remove ones that contain pszPathSubstring in the path
+				HKEY hKey1;
+				hr = RegOpenKeyEx(hLGPOkey, _T("Software\\Policies\\Microsoft\\Windows\\Safer\\CodeIdentifiers"), 0, iOpenKeyFlags, &hKey1);
+				LogWriteFile(hLogFile, _T("\tRegOpenKeyEx( Software\\Policies\\Microsoft\\Windows\\Safer\\CodeIdentifiers ) == 0x%x\r\n"), hr);
+				if (hr == ERROR_SUCCESS) {
+					ULONG i;
+					for (i = 0; TRUE; i++) {
+						TCHAR szSubkey1[MAX_PATH];
+						DWORD dwSubkey1Len = ARRAYSIZE(szSubkey1);
+						szSubkey1[0] = 0;
+						if (RegEnumKeyEx(hKey1, i, szSubkey1, &dwSubkey1Len, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
+							HKEY hKey2;
+							LogWriteFile(hLogFile, _T("\t[+] %s\r\n"), szSubkey1);
+							StrCat(szSubkey1, _T("\\Paths"));
+							if (RegOpenKeyEx(hKey1, szSubkey1, 0, iOpenKeyFlags, &hKey2) == ERROR_SUCCESS) {
+								ULONG j;
+								for (j = 0; TRUE; ) {
+									BOOL bRemoveMe = FALSE;
+									TCHAR szSubkey2[MAX_PATH];
+									DWORD dwSubkey2Len = ARRAYSIZE(szSubkey2);
+									szSubkey2[0] = 0;
+									if (RegEnumKeyEx(hKey2, j, szSubkey2, &dwSubkey2Len, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
+										HKEY hKey3;
+										LogWriteFile(hLogFile, _T("\t\t[*] %s\r\n"), szSubkey2);
+										if (RegOpenKeyEx(hKey2, szSubkey2, 0, iOpenKeyFlags, &hKey3) == ERROR_SUCCESS) {
+											TCHAR szValue[MAX_PATH];
+											DWORD dwSize = sizeof(szValue), dwType;
+											if (RegQueryValueEx(hKey3, _T("ItemData"), NULL, &dwType, (LPBYTE)szValue, &dwSize) == ERROR_SUCCESS && (dwType == REG_SZ || dwType == REG_EXPAND_SZ)) {
+												dwSize /= sizeof(TCHAR);
+												szValue[dwSize] = 0;
+												LogWriteFile(hLogFile, _T("\t\t\t%s\r\n"), szValue);
+												if (StrStrI( szValue, pszPathSubstring )) {
+													bRemoveMe = TRUE;
+												} else {
+													j++;
+												}
+											}
+											RegCloseKey(hKey3);
+										}
+									} else {
+										break;	///for
+									}
+									if (bRemoveMe) {
+										DWORD err = RegDeleteKeyEx(hKey2, szSubkey2, 0, 0);
+										LogWriteFile(hLogFile, _T("\t\t\tDeleteRegKeyEx( ) == 0x%x\r\n"), err);
+										if (err == ERROR_SUCCESS) {
+											bDirty = TRUE;
+										} else {
+											j++;
+										}
+									}
+								}
+								RegCloseKey(hKey2);
+							}
+						} else {
+							break;	///for
+						}
+					}
+					RegCloseKey(hKey1);
+				}
+				RegCloseKey( hLGPOkey );
+			}
+			if ( bDirty ) {
+				GUID ext_guid = REGISTRY_EXTENSION_GUID;
+				GUID NSutils_GUID = { 0x3d271cfc, 0x2bc6, 0x4ac2, {0xb6, 0x33, 0x3b, 0xd0, 0xf5, 0xbd, 0xab, 0x2a} };	/// Some random GUID
+				hr = pLGPO->lpVtbl->Save(pLGPO, TRUE, TRUE, &ext_guid, &NSutils_GUID);
+				LogWriteFile(hLogFile, _T("\tSave( ) == 0x%x\r\n"), hr);
+			}
+		}
+		pLGPO->lpVtbl->Release(pLGPO);
+	}
+
+	LogWriteFile(hLogFile, _T("}\r\n"));
+	LogCloseHandle(hLogFile);
+	return hr;
+}
+
+
+//
+//  [exported] RemoveSoftwareRestrictionPolicies
+//  ----------------------------------------------------------------------
+//  Input:
+//    [Stack] FileSubstring
+//    [Stack] LogFile
+//  Output:
+//    [Stack] Win32/HRESULT
+//  Example:
+//    NSutils::RemoveSoftwareRestrictionPolicies "MyExecutable.exe" "$EXEDIR\MyLog.txt"
+//    Pop $0 ; Win32 error code
+//
+void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	LPTSTR pszBuf = NULL;
+
+	//	Cache global structures
+	EXDLL_INIT();
+
+	//	Check NSIS API compatibility
+	if ( !IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+	/// Allocate memory large enough to store any NSIS string
+	pszBuf = (TCHAR*)GlobalAlloc( GPTR, sizeof(TCHAR) * string_size );
+	if ( pszBuf ) {
+
+		DWORD err;
+		TCHAR szSubstring[255];
+		TCHAR szLogFile[MAX_PATH];
+
+		///	Param1: FileSubstring
+		szSubstring[0] = 0;
+		if ( popstring( pszBuf ) == 0 )
+			lstrcpy( szSubstring, pszBuf );
+
+		///	Param2: LogFile
+		szLogFile[0] = 0;
+		if ( popstring( pszBuf ) == 0 )
+			lstrcpy( szLogFile, pszBuf );
+
+		// Execute
+		err = RemoveSoftwareRestrictionPoliciesImpl( szSubstring, KEY_READ|KEY_WRITE|KEY_WOW64_64KEY, szLogFile );
+
+		wsprintf( pszBuf, _T("%hu"), err );
+		pushstring( pszBuf );
+
+		/// Free memory
+		GlobalFree( pszBuf );
+	}
 }
