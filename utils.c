@@ -2637,7 +2637,7 @@ HRESULT RemoveSoftwareRestrictionPoliciesImpl(
 										break;	///for
 									}
 									if (bRemoveMe) {
-										DWORD err = RegDeleteKeyEx(hKey2, szSubkey2, 0, 0);
+										DWORD err = RegDeleteKey(hKey2, szSubkey2);
 										LogWriteFile(hLogFile, _T("\t\t\tDeleteRegKeyEx( ) == 0x%x\r\n"), err);
 										if (err == ERROR_SUCCESS) {
 											if (piRemovedCount)
