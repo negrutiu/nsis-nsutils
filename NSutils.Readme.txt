@@ -5,7 +5,7 @@ Functions exported by NSutils
 _______________________________________________________________________________
 
 [GetVersionInfoString]
-Extracts a specific string off of an executable's version information block.
+Extract a specific string off of an executable's version information block.
 Be mindful of the file system redirection on 64-bit platforms!
 
 Syntax:
@@ -28,7 +28,7 @@ Example:
 _______________________________________________________________________________
 
 [GetFileVersion]
-Extracts the numeric file version off of an executable's version information block.
+Extract the numeric file version off of an executable's version information block.
 Be mindful of the file system redirection on 64-bit platforms!
 
 Syntax:
@@ -39,7 +39,7 @@ Return values:
 	"v1.v2.v3.v4" version string on the stack. In addition, $1, $2, $3 and $4
 	will store each version component.
 	If the operation is unsuccessful, an empty string will be returned on the
-	stack and $1..$4 will *not* be set.
+	stack, and $1..$4 will not be set.
 
 Example:
 	${DisableX64FSRedirection}	; Optional. On 64-bit platforms, read from System32 rather than SysWOW64
@@ -55,7 +55,7 @@ Example:
 _______________________________________________________________________________
 
 [GetProductVersion]
-Extracts the numeric product version off of an executable's version information block.
+Extract the numeric product version off of an executable's version information block.
 Be mindful of the file system redirection on 64-bit platforms!
 
 Syntax:
@@ -66,7 +66,7 @@ Return values:
 	"v1.v2.v3.v4" version string on the stack. In addition, $1, $2, $3 and $4
 	will store each version component.
 	If the operation is unsuccessful, an empty string will be returned on the
-	stack and $1..$4 will *not* be set.
+	stack, and $1..$4 will not be set.
 
 Example:
 	${DisableX64FSRedirection}	; Optional. On 64-bit platforms, read from System32 rather than SysWOW64
@@ -82,7 +82,7 @@ Example:
 _______________________________________________________________________________
 
 [ReadResourceString]
-Reads the specified string from an executable's string table.
+Read a string from an executable's string table.
 Be mindful of the file system redirection on 64-bit platforms!
 
 Syntax:
@@ -105,8 +105,8 @@ Example:
 _______________________________________________________________________________
 
 [WriteResourceString]
-Writes the specified string to an executable's string table.
-If an *empty* string is specified, it will be removed from the string table.
+Write a string to an executable's string table.
+If an empty string is specified, it will be removed from the string table.
 
 Be mindful of the file system redirection on 64-bit platforms!
 Be mindful of the .LN and .mui files (introduced in Vista)!
@@ -132,11 +132,11 @@ Example:
 _______________________________________________________________________________
 
 [ExecutePendingFileRenameOperations]
-The routine examines the "PendingFileRenameOperations" registry value and
-executes the operations on files that match a specified search pattern.
-The operations will be removed from the registry value, therefore they won't
+The routine examines the "PendingFileRenameOperations" registry value
+and executes pending operations that match a substring.
+Operations will be removed from the registry value, therefore they won't
 be executed during the next reboot...
-If not empty, this routine will log all file rename operations to LogFile.
+Operations will be logged to LogFile.
 
 Syntax:
 	NSutils::ExecutePendingFileRenameOperations [/NOUNLOAD] "FileSubstring" "LogFile"
@@ -162,7 +162,7 @@ _______________________________________________________________________________
 
 [FindPendingFileRenameOperations]
 The routine searches the "PendingFileRenameOperations" registry value for
-paths containing a specified substring.
+pending operations that match a substring.
 
 Syntax:
 	NSutils::FindPendingFileRenameOperations [/NOUNLOAD] "FileSubstring"
@@ -182,7 +182,7 @@ _______________________________________________________________________________
 
 [DisableProgressStepBack]
 [RestoreProgressStepBack]
-Don't allow the progress bar to step back.
+Don't allow a progress bar control to step back.
 It happens when you have loops in the script.
 NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
 
@@ -202,7 +202,7 @@ Example:
 _______________________________________________________________________________
 
 [RedirectProgressBar]
-Redirects the relevant window messages of a progress bar to a second progress bar.
+Redirect the relevant window messages of a progress bar to another progress bar.
 To stop the redirection set ProgressBar2Handle to NULL.
 NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
 
@@ -222,7 +222,7 @@ _______________________________________________________________________________
 
 [StartTimer]
 [StopTimer]
-Starts a timer. A callback is fired each time the clock ticks.
+Start a timer. A callback is fired each time the clock ticks.
 The callback is a regular NSIS function, no input, no output.
 NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
 
@@ -249,15 +249,15 @@ _______________________________________________________________________________
 [StartReceivingClicks]
 [StopReceivingClicks]
 
-Subclass a button in order to intercept its BN_CLICKED commands.
-A NSIS callback is fired when a child button gets clicked.
+Subclass a (parent) window in order to intercept BN_CLICKED commands.
+A NSIS callback is fired whenever a child button is clicked.
 The callback function is a regular NSIS function. It receives button's HWND and ID on the stack. No return value.
 
 NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
 
 Syntax:
-	NSutils::StartReceivingClicks /NOUNLOAD ButtonParentWnd NsisCallbackFunction
-	NSutils::StopReceivingClicks [/NOUNLOAD] ButtonParentWnd
+	NSutils::StartReceivingClicks /NOUNLOAD ParentHwnd NsisCallbackFunction
+	NSutils::StopReceivingClicks [/NOUNLOAD] ParentHwnd
 
 Return values:
 	None
@@ -276,7 +276,7 @@ Example:
 _______________________________________________________________________________
 
 [LoadImageFile]
-Loads an image in memory (HBITMAP) using oleaut32!OleLoadPicturePath.
+Load an image in memory (HBITMAP) using oleaut32!OleLoadPicturePath.
 The source can be either a local file, or an URL
 Supported formats: BMP, JPEG, GIF
 
@@ -303,7 +303,7 @@ _______________________________________________________________________________
 
 [RejectCloseMessages]
 Reject closing window messages such as WM_CLOSE, WM_DESTROY, WM_COMMAND(IDCANCEL), WM_SYSCOMMAND(SC_CLOSE), etc
-All these messages will be blocked regardless of what window they've been sent to
+All such messages will be blocked regardless of which window they've been sent to.
 
 Syntax:
 	NSutils::RejectCloseMessages /NOUNLOAD true|false
@@ -413,7 +413,7 @@ Example:
 _______________________________________________________________________________
 
 [CompareFiles]
-Test whether two files are identical
+Test whether two files are identical (content comparison)
 
 Syntax:
 	NSutils::CompareFiles [/NOUNLOAD] File1 File2
