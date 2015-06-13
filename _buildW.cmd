@@ -32,7 +32,7 @@ set CL=/nologo /O1 /Ob2 /Os /Zi /arch:SSE /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /
 set LINK=/DEBUG /OPT:REF /OPT:ICF
 set LINK=%LINK% /INCREMENTAL:NO /MANIFEST:NO /MACHINE:X86 /NODEFAULTLIB /ENTRY:"DllMain" kernel32.lib user32.lib version.lib advapi32.lib shlwapi.lib gdi32.lib ole32.lib uuid.lib oleaut32.lib msimg32.lib ".\%OUTDIR%\temp\NSutils.res"
 rc.exe /Fo ".\%OUTDIR%\temp\NSutils.res" "NSutils.rc"
-cl.exe "main.c" "verinfo.c" "utils.c" "strblock.c" "gdi.c" "nsiswapi\pluginapi.c" && set BUILD_SUCCESSFUL=1
+cl.exe "main.c" "verinfo.c" "registry.c" "utils.c" "strblock.c" "gdi.c" "nsiswapi\pluginapi.c" && set BUILD_SUCCESSFUL=1
 
 if %BUILD_SUCCESSFUL%==1 (
 	echo Success!

@@ -240,6 +240,7 @@
   <ItemGroup>
     <ClCompile Include="gdi.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="registry.c" />
     <ClCompile Include="strblock.c" />
     <ClCompile Include="utils.c" />
     <ClCompile Include="verinfo.c" />
