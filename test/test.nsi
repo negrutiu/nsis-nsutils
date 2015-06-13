@@ -427,6 +427,94 @@ Section /o "Test REG_MULTI_SZ operations"
 SectionEnd
 
 
+Section /o "Test REG_BINARY operations"
+
+	${Print} "--------------------------------------------------------------"
+	${Print} "REG_BINARY tests"
+
+	!define REGKEY "Software\MyCompany"
+	!define REGVAL "MyValue"
+
+	SetRegView 64
+	DeleteRegValue HKCU "${REGKEY}" "${REGVAL}"
+	DeleteRegKey HKCU "${REGKEY}"
+
+	; Write 1
+	!define STRING "abc"
+	!define OFFSET 10
+	!define FLAGS 0
+!ifdef DEBUGGING_ENABLED
+	Push "${STRING}"
+	Push ${OFFSET}
+	Push ${FLAGS}
+	Push "${REGVAL}"
+	Push "HKCU\${REGKEY}"
+	CallInstDLL "${NSUTILS}" RegBinaryInsertString
+!else
+	NSutils::RegBinaryInsertString "HKCU\${REGKEY}" "${REGVAL}" ${FLAGS} ${OFFSET} "${STRING}"
+!endif
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} "  RegBinaryInsertString( HKCU\${REGKEY}[${REGVAL}], ${OFFSET}, ${STRING} ) == $0"
+	!undef STRING
+	!undef OFFSET
+	!undef FLAGS
+
+	; Write 2
+	!define STRING "abcdef"
+	!define OFFSET 10
+	!define FLAGS 0
+!ifdef DEBUGGING_ENABLED
+	Push "${STRING}"
+	Push ${OFFSET}
+	Push ${FLAGS}
+	Push "${REGVAL}"
+	Push "HKCU\${REGKEY}"
+	CallInstDLL "${NSUTILS}" RegBinaryInsertString
+!else
+	NSutils::RegBinaryInsertString "HKCU\${REGKEY}" "${REGVAL}" ${FLAGS} ${OFFSET} "${STRING}"
+!endif
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} "  RegBinaryInsertString( HKCU\${REGKEY}[${REGVAL}], ${OFFSET}, ${STRING} ) == $0"
+	!undef STRING
+	!undef OFFSET
+	!undef FLAGS
+
+	; Write 3
+	!define STRING "XY"
+	!define OFFSET 14
+	!define FLAGS 0
+!ifdef DEBUGGING_ENABLED
+	Push "${STRING}"
+	Push ${OFFSET}
+	Push ${FLAGS}
+	Push "${REGVAL}"
+	Push "HKCU\${REGKEY}"
+	CallInstDLL "${NSUTILS}" RegBinaryInsertString
+!else
+	NSutils::RegBinaryInsertString "HKCU\${REGKEY}" "${REGVAL}" ${FLAGS} ${OFFSET} "${STRING}"
+!endif
+	Pop $0
+	IntFmt $0 "0x%x" $0
+	${Print} "  RegBinaryInsertString( HKCU\${REGKEY}[${REGVAL}], ${OFFSET}, ${STRING} ) == $0"
+	!undef STRING
+	!undef OFFSET
+	!undef FLAGS
+
+	; TODO: Do it automatically
+	MessageBox MB_ICONINFORMATION 'Manually verify HKCU\${REGKEY}[${REGVAL}]$\nMust be "...abXYef"'
+
+	DeleteRegValue HKCU "${REGKEY}" "${REGVAL}"
+	DeleteRegKey HKCU "${REGKEY}"
+	SetRegView 32
+
+	!undef REGKEY
+	!undef REGVAL
+
+SectionEnd
+
+
 Section /o "Test compare files"
 	${Print} "--------------------------------------------------------------"
 	${Print} "Test compare files"

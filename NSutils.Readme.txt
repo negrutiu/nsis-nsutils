@@ -387,6 +387,22 @@ Example:
 	Pop $1	; Substring at index 2
 _______________________________________________________________________________
 
+[RegBinaryInsertString]
+Write a wide-character string to a REG_BINARY registry value, at a specific position
+The NULL terminator is not written
+
+Syntax:
+	NSutils::RegBinaryInsertString [/NOUNLOAD] "RegKeyName" "RegValueName" KeyFlags Offset String
+
+Return value:
+	[Stack] Win32 error
+
+Example:
+	; Write "MyString" to a REG_BINARY value, at (byte) offset 100
+	NSutils::RegBinaryInsertString /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} 100 "My string"
+	Pop $0	; Win32 error
+_______________________________________________________________________________
+
 [CPUID]
 Retrieve CPU capabilities
 

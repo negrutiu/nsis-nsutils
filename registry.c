@@ -727,3 +727,175 @@ void RegMultiSzRead(
 	pushstring( szSubstr );
 	pushintptr( err );
 }
+
+
+//++ [not exported] RegBinaryWriteBufImpl
+DWORD RegBinaryWriteBufImpl(
+	__in LPCTSTR szRegKey,
+	__in_opt LPCTSTR szRegValue,
+	__in_opt DWORD dwKeyOpenFlags,
+	__in int iOffset,
+	__in LPVOID pBuf,
+	__in ULONG iBufSize
+	)
+{
+	DWORD err = ERROR_SUCCESS;
+	if (szRegKey && *szRegKey && pBuf && iBufSize) {
+
+		LPTSTR pszPath;
+		HKEY hRoot, hKey;
+		if (RegistryParsePath( szRegKey, &hRoot, (LPCTSTR*)&pszPath )) {
+
+			err = RegCreateKeyEx( hRoot, pszPath, 0, NULL, 0, KEY_READ | KEY_WRITE | dwKeyOpenFlags, NULL, &hKey, NULL );
+			if (err == ERROR_SUCCESS) {
+
+				BOOL bFatalError = FALSE;
+				LPBYTE pValBuf = NULL;
+				ULONG iValBufSize = 0;
+
+				// Read existing value
+				DWORD iType, iSize = 0;
+				err = RegQueryValueEx( hKey, szRegValue, NULL, &iType, NULL, &iSize );
+				if (err == ERROR_SUCCESS) {
+					if (iType == REG_BINARY) {
+						iValBufSize = iSize;
+						iValBufSize = __max( iValBufSize, iOffset + iBufSize );		/// Extend the buffer if necessary
+						pValBuf = (LPBYTE)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, iValBufSize );
+						if (pValBuf) {
+							err = RegQueryValueEx( hKey, szRegValue, NULL, &iType, pValBuf, &iSize );
+						} else {
+							err = ERROR_OUTOFMEMORY;
+							bFatalError = TRUE;		/// We can't continue
+						}
+					} else {
+						err = ERROR_DATATYPE_MISMATCH;
+						bFatalError = TRUE;		/// We can't continue
+					}
+				}
+
+				if (!bFatalError) {
+
+					if (err != ERROR_SUCCESS) {
+						// New value
+						iValBufSize = iOffset + iBufSize;
+						pValBuf = (LPBYTE)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, iValBufSize );
+						err = pValBuf ? ERROR_SUCCESS : ERROR_OUTOFMEMORY;
+					}
+
+					if (err == ERROR_SUCCESS) {
+						// Modify
+						memmove( pValBuf + iOffset, pBuf, iBufSize );
+
+						// Write
+						err = RegSetValueEx( hKey, szRegValue, 0, REG_BINARY, pValBuf, iValBufSize );
+					}
+				}
+
+				// Cleanup
+				if (pValBuf)
+					HeapFree( GetProcessHeap(), 0, pValBuf );
+
+				RegCloseKey( hKey );
+			}
+		} else {
+			err = ERROR_PATH_NOT_FOUND;		/// RegistryParsePath
+		}
+	} else {
+		err = ERROR_INVALID_PARAMETER;
+	}
+
+	return err;
+}
+
+//++ [exported] RegBinaryInsertString
+//  ----------------------------------------------------------------------
+//+ Input:
+//    [Stack] Registry key (ex: "HKCU\Software\MyCompany")
+//    [Stack] Registry value. If empty, the default (unnamed) value is set
+//    [Stack] Additional key flags (ex: KEY_WOW64_64KEY)
+//    [Stack] Offset (bytes)
+//    [Stack] The WCS (wide-character string)
+//+ Output:
+//    [Stack] Win32 error
+//+ Example:
+//    NSutils::RegBinaryInsertString /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} 100 "My string"
+//    Pop $0; Win32 error
+__declspec(dllexport)
+void RegBinaryInsertString(
+	HWND hWndParent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	DWORD err = ERROR_SUCCESS;
+	LPTSTR pszBuf = NULL;
+
+	// Cache global structures
+	EXDLL_INIT();
+
+	// Check NSIS API compatibility
+	if (!IsCompatibleApiVersion()) {
+		/// TODO: display an error message?
+		return;
+	}
+
+	//	Retrieve NSIS parameters
+	/// Allocate memory large enough to store any NSIS string
+	pszBuf = (TCHAR*)GlobalAlloc( GPTR, sizeof( TCHAR ) * string_size );
+	if (pszBuf) {
+
+		TCHAR szKey[512], szValue[128];
+		int iOffset;
+		DWORD dwFlags;
+
+		err = ERROR_INVALID_PARAMETER;
+
+		///	Param1: Registry key
+		if (popstring( pszBuf ) == 0) {
+			lstrcpyn( szKey, pszBuf, ARRAYSIZE( szKey ) );
+			/// Param2: Registry value
+			if (popstring( pszBuf ) == 0) {
+				lstrcpyn( szValue, pszBuf, ARRAYSIZE( szValue ) );
+				/// Param3: Additional key flags
+				dwFlags = popint();
+				/// Param4: Byte offset
+				iOffset = popint();
+				/// Param5: String
+				if (popstring( pszBuf ) == 0) {
+
+					// Write
+#ifdef _UNICODE
+					err = RegBinaryWriteBufImpl( szKey, szValue, dwFlags, iOffset, pszBuf, lstrlen( pszBuf ) * sizeof( WCHAR ) );
+#else
+					/// MBCS -> Unicode
+					ULONG iLen = lstrlen( pszBuf );
+					LPWSTR pszBufW = (LPWSTR)GlobalAlloc( GPTR, (iLen + 1) * sizeof( WCHAR ) );
+					if (pszBuf) {
+						iLen = MultiByteToWideChar( CP_ACP, 0, pszBuf, -1, pszBufW, iLen + 1 );
+						if (iLen > 0) {
+							/// Write
+							err = RegBinaryWriteBufImpl( szKey, szValue, dwFlags, iOffset, pszBufW, (iLen - 1)*sizeof( WCHAR ) );
+						} else {
+							err = GetLastError();
+						}
+						GlobalFree( pszBufW );
+					} else {
+						err = GetLastError();
+					}
+#endif
+				}
+			}
+		}
+
+		/// Free memory
+		GlobalFree( pszBuf );
+
+	} else {
+		err = ERROR_OUTOFMEMORY;
+	}
+
+	/// Return value
+	pushintptr( err );
+}
