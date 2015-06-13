@@ -347,10 +347,10 @@ DWORD LoadImageFileImpl(
 	return err;
 }
 
-//
-//  [exported] LoadImageFile
+
+//++ [exported] LoadImageFile
 //  ----------------------------------------------------------------------
-//  Example:
+//+ Example:
 //    NSutils::LoadImageFile "$PLUGINSDIR\Image.jpg" 640 480 center center
 //    Pop $0
 //    ${If} $0 <> 0
@@ -361,7 +361,7 @@ DWORD LoadImageFileImpl(
 //    ${Else}
 //      ;Error
 //    ${EndIf}
-//
+
 void __declspec(dllexport) LoadImageFile(
 	HWND hWndParent,
 	int string_size,

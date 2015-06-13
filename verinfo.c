@@ -2,9 +2,7 @@
 #include <windows.h>
 #include "nsiswapi\pluginapi.h"
 
-//
-//  FindFirstStringFileInfo
-//
+//++ FindFirstStringFileInfo
 BOOL FindFirstStringFileInfo(
 	__inout WORD **pp,
 	__in LPWSTR pszParentKeyW,
@@ -67,9 +65,8 @@ BOOL FindFirstStringFileInfo(
 	return FALSE;
 }
 
-//
-//  ReadVersionInfoString
-//
+
+//++ ReadVersionInfoString
 DWORD ReadVersionInfoString(
 	__in_opt LPCTSTR szFile,
 	__in LPCTSTR szStringName,
@@ -174,9 +171,7 @@ DWORD ReadVersionInfoString(
 }
 
 
-//
-//  ReadFixedFileInfo
-//
+//++ ReadFixedFileInfo
 DWORD ReadFixedFileInfo(
 	__in_opt LPCTSTR szFile,
 	__out VS_FIXEDFILEINFO *pFfi
@@ -242,10 +237,10 @@ DWORD ReadFixedFileInfo(
 	return err;
 }
 
-//
-//  [exported] GetVersionInfoString
+
+//++ [exported] GetVersionInfoString
 //  ----------------------------------------------------------------------
-//  Example:
+//+ Example:
 //    NSutils::GetVersionInfoString "$INSTDIR\Test.exe" "LegalCopyright"
 //    Pop $0
 //    ${If} $0 != ""
@@ -253,7 +248,7 @@ DWORD ReadFixedFileInfo(
 //    ${Else}
 //      ;Error
 //    ${EndIf}
-//
+
 void __declspec(dllexport) GetVersionInfoString(
 	HWND hWndParent,
 	int string_size,
@@ -305,10 +300,10 @@ void __declspec(dllexport) GetVersionInfoString(
 	}
 }
 
-//
-//  [exported] GetFileVersion
+
+//++ [exported] GetFileVersion
 //  ----------------------------------------------------------------------
-//  Example:
+//+ Example:
 //    NSutils::GetFileVersion "$SYSDIR\Notepad.exe"
 //    Pop $0
 //    ${If} $0 != ""
@@ -318,7 +313,7 @@ void __declspec(dllexport) GetVersionInfoString(
 //    ${Else}
 //      ;Error
 //    ${EndIf}
-//
+
 void __declspec(dllexport) GetFileVersion(
 	HWND hWndParent,
 	int string_size,
@@ -382,10 +377,10 @@ void __declspec(dllexport) GetFileVersion(
 	}
 }
 
-//
-//  [exported] GetProductVersion
+
+//++ [exported] GetProductVersion
 //  ----------------------------------------------------------------------
-//  Example:
+//+ Example:
 //    NSutils::GetFileVersion "$SYSDIR\Notepad.exe"
 //    Pop $0
 //    ${If} $0 != ""
@@ -395,7 +390,7 @@ void __declspec(dllexport) GetFileVersion(
 //    ${Else}
 //      ;Error
 //    ${EndIf}
-//
+
 void __declspec(dllexport) GetProductVersion(
 	HWND hWndParent,
 	int string_size,

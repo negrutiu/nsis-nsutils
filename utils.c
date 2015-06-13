@@ -16,8 +16,8 @@ extern HINSTANCE g_hModule;				/// Defined in main.c
 HHOOK g_hMessageLoopHook = NULL;
 
 
-// UtilsUnload
-// Called when the plugin unloads
+//++ UtilsUnload
+/// Called when the plugin unloads
 VOID UtilsUnload()
 {
 	// If still hooked, unhook the message loop
@@ -140,7 +140,7 @@ BOOLEAN EnableWow64FsRedirection( __in BOOLEAN bEnable )
 }
 
 
-//++ Subclassing definitions
+//+ Subclassing definitions
 #define PROP_WNDPROC_OLD				_T("NSutils.WndProc.Old")
 #define PROP_WNDPROC_REFCOUNT			_T("NSutils.WndProc.RefCount")
 #define PROP_PROGRESSBAR_NOSTEPBACK		_T("NSutils.ProgressBar.NoStepBack")
@@ -461,10 +461,9 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 }
 
 
-//
-//  [exported] ExecutePendingFileRenameOperations
+//++ [exported] ExecutePendingFileRenameOperations
 //  ----------------------------------------------------------------------
-//  Example:
+//+ Example:
 //    NSutils::ExecutePendingFileRenameOperations "SrcFileSubstr" "X:\path\mylog.log"
 //    Pop $0 ; Win32 error code
 //    Pop $1 ; File operations Win32 error code
@@ -473,7 +472,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 //    ${Else}
 //      ;Error
 //    ${EndIf}
-//
+
 void __declspec(dllexport) ExecutePendingFileRenameOperations(
 	HWND hWndParent,
 	int string_size,
@@ -599,15 +598,16 @@ LRESULT CALLBACK ProgressBarWndProc(
 }
 
 
-//
-//  [exported] DisableProgressStepBack
+//++ [exported] DisableProgressStepBack
 //  ----------------------------------------------------------------------
-//  Input:  Progress bar window handle
-//  Output: None
-//
-//  Example:
+//+ Input:
+//    [Stack] Progress bar window handle
+//+ Output:
+//    None
+//+ Example:
 //    NSutils::DisableProgressStepBack /NOUNLOAD $mui.InstFilesPage.ProgressBar
 //    /NOUNLOAD is mandatory for obvious reasons...
+
 void __declspec(dllexport) DisableProgressStepBack(
 	HWND hWndParent,
 	int string_size,
@@ -641,15 +641,15 @@ void __declspec(dllexport) DisableProgressStepBack(
 }
 
 
-//
-//  [exported] RestoreProgressStepBack
+//++ [exported] RestoreProgressStepBack
 //  ----------------------------------------------------------------------
-//  Input:  Progress bar window handle
-//  Output: None
-//
-//  Example:
+//+ Input:
+//    [Stack] Progress bar window handle
+//+ Output:
+//    None
+//+ Example:
 //    NSutils::RestoreProgressStepBack /NOUNLOAD $mui.InstFilesPage.ProgressBar
-//
+
 void __declspec(dllexport) RestoreProgressStepBack(
 	HWND hWndParent,
 	int string_size,
@@ -682,15 +682,15 @@ void __declspec(dllexport) RestoreProgressStepBack(
 }
 
 
-//
-//  [exported] RedirectProgressBar
+//++ [exported] RedirectProgressBar
 //  ----------------------------------------------------------------------
-//  Input:  ProgressBarWnd SecondProgressBarWnd
-//  Output: None
-//
-//  Example:
+//+ Input:
+//    [Stack] ProgressBarWnd SecondProgressBarWnd
+//+ Output:
+//    None
+//+ Example:
 //    NSutils::RedirectProgressBar /NOUNLOAD $mui.InstFilesPage.ProgressBar $mui.MyProgressBar
-//
+
 void __declspec(dllexport) RedirectProgressBar(
 	HWND hWndParent,
 	int string_size,
@@ -815,19 +815,18 @@ LRESULT CALLBACK MainWndProc(
 	}
 }
 
-//
-//  [exported] StartTimer
+
+//++ [exported] StartTimer
 //  ----------------------------------------------------------------------
-//  Input:  NsisCallbackFunction TimerInterval
-//  Output: None
-//
-//  The NsisCallbackFunction is a regular NSIS function, no input, no output.
-//  TimerInterval in milliseconds (1000ms = 1s)
-//
-//  Example:
+//+ Input:
+//    [Stack] NsisCallbackFunction (regular NSIS function, no input, no output)
+//    [Stack] TimerInterval (in milliseconds, 1000ms = 1s)
+//+ Output:
+//    None
+//+ Example:
 //    GetFunctionAddress $0 OnMyTimer
 //    NSutils::StartTimer /NOUNLOAD $0 1000
-//
+
 void __declspec(dllexport) StartTimer(
 	HWND hWndParent,
 	int string_size,
@@ -874,16 +873,16 @@ void __declspec(dllexport) StartTimer(
 }
 
 
-//
-//  [exported] StopTimer
+//++ [exported] StopTimer
 //  ----------------------------------------------------------------------
-//  Input:  NsisCallbackFunction
-//  Output: None
-//
-//  Example:
+//+ Input:
+//    [Stack] NsisCallbackFunction
+//+ Output:
+//    None
+//+ Example:
 //    GetFunctionAddress $0 OnMyTimer
 //    NSutils::StopTimer $0
-//
+
 void __declspec(dllexport) StopTimer(
 	HWND hWndParent,
 	int string_size,
@@ -924,16 +923,14 @@ void __declspec(dllexport) StopTimer(
 }
 
 
-//
-//  [exported] StartReceivingClicks
+//++ [exported] StartReceivingClicks
 //  ----------------------------------------------------------------------
-//  Input:  ParentWindow NsisCallbackFunction
-//  Output: None
-//
-//  The NsisCallbackFunction is a regular NSIS function. The HWND of the button is passed on the top of the stack.
-//  
-//
-//  Example:
+//+ Input:
+//    [Stack] ParentWindow
+//    [Stack] NsisCallbackFunction (Regular NSIS function. The HWND of the button is passed on the top of the stack)
+//+ Output:
+//    None
+//+ Example:
 //    Function OnButtonClick
 //       Pop $1 ; Button HWND
 //       Pop $2 ; Button control ID
@@ -945,7 +942,7 @@ void __declspec(dllexport) StopTimer(
 //    ...
 //    GetFunctionAddress $0 OnButtonClick
 //    NSutils::StopReceivingClicks /NOUNLOAD $HWNDPARENT $0
-//
+
 void __declspec(dllexport) StartReceivingClicks(
 	HWND hWndParent,
 	int string_size,
@@ -1148,10 +1145,9 @@ DWORD FindPendingFileRenameOperationsImpl(
 }
 
 
-//
-//  [exported] FindPendingFileRenameOperations
+//++ [exported] FindPendingFileRenameOperations
 //  ----------------------------------------------------------------------
-//  Example:
+//+ Example:
 //    NSutils::FindPendingFileRenameOperations "FileSubstr"
 //    Pop $0 ; First file path containing FileSubstr, or, an empty string if nothing is found
 //    ${If} $0 != ""
@@ -1159,7 +1155,7 @@ DWORD FindPendingFileRenameOperationsImpl(
 //    ${Else}
 //      ;Not found
 //    ${EndIf}
-//
+
 void __declspec(dllexport) FindPendingFileRenameOperations(
 	HWND hWndParent,
 	int string_size,
@@ -1262,18 +1258,17 @@ LRESULT CALLBACK MessageLoopRejectCloseWndProc( __in int code, __in WPARAM wPara
 }
 
 
-//
-//  [exported] RejectCloseMessages
+//++ [exported] RejectCloseMessages
 //  ----------------------------------------------------------------------
-//  Input:
+//+ Input:
 //    [Stack] true/false
-//  Output:
+//+ Output:
 //    None
-//  Example:
+//+ Example:
 //    NSutils::RejectCloseMessages /NOUNLOAD true
 //    [...]
 //    NSutils::RejectCloseMessages false
-//
+
 void __declspec(dllexport) RejectCloseMessages(
 	HWND hWndParent,
 	int string_size,
@@ -1620,17 +1615,16 @@ ULONG CloseFileHandlesImpl(
 }
 
 
-//
-//  [exported] CloseFileHandles
+//++ [exported] CloseFileHandles
 //  ----------------------------------------------------------------------
-//  Input:
+//+ Input:
 //    [Stack] File/folder path
-//  Output:
+//+ Output:
 //    [Stack] Number of closed handles
-//  Example:
+//+ Example:
 //    NSutils::CloseFileHandles [/NOUNLOAD] "C:\Windows\System32\drivers\etc\hosts"
 //    Pop $0	; The number of closed handles
-//
+
 void __declspec(dllexport) CloseFileHandles(
 	HWND hWndParent,
 	int string_size,
@@ -1674,17 +1668,16 @@ void __declspec(dllexport) CloseFileHandles(
 }
 
 
-//
-//  [exported] CPUID
+//++ [exported] CPUID
 //  ----------------------------------------------------------------------
-//  Input:
+//+ Input:
 //    [Stack] CPUID Function ID (such as 1, 2, 0x80000001, etc.)
-//  Output:
+//+ Output:
 //    [Stack] EAX
 //    [Stack] EBX
 //    [Stack] ECX
 //    [Stack] EEX
-//  Example:
+//+ Example:
 //    NSutils::CPUID /NOUNLOAD 1
 //    Pop $1	; EAX
 //    Pop $2	; EBX
@@ -1694,7 +1687,7 @@ void __declspec(dllexport) CloseFileHandles(
 //    ${If} $0 <> 0
 //        DetailPrint "CPU supports SSE2"
 //    ${EndIf}
-//
+
 void __declspec(dllexport) CPUID(
 	HWND hWndParent,
 	int string_size,
@@ -1740,15 +1733,14 @@ void __declspec(dllexport) CPUID(
 }
 
 
-//
-//  [exported] CompareFiles
+//++ [exported] CompareFiles
 //  ----------------------------------------------------------------------
-//  Input:
+//+ Input:
 //    [Stack] File1
 //    [Stack] File2
-//  Output:
+//+ Output:
 //    [Stack] TRUE/FALSE
-//
+
 void __declspec(dllexport) CompareFiles(
 	HWND hWndParent,
 	int string_size,
@@ -1953,20 +1945,19 @@ HRESULT RemoveSoftwareRestrictionPoliciesImpl(
 }
 
 
-//
-//  [exported] RemoveSoftwareRestrictionPolicies
+//++ [exported] RemoveSoftwareRestrictionPolicies
 //  ----------------------------------------------------------------------
-//  Input:
+//+ Input:
 //    [Stack] FileSubstring
 //    [Stack] LogFile
-//  Output:
+//+ Output:
 //    [Stack] Win32/HRESULT
 //    [Stack] The number of removed policies
-//  Example:
+//+ Example:
 //    NSutils::RemoveSoftwareRestrictionPolicies "MyExecutable.exe" "$EXEDIR\MyLog.txt"
 //    Pop $0 ; Win32 error code
 //    Pop $1 ; Removed policy count
-//
+
 void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
 	HWND hWndParent,
 	int string_size,

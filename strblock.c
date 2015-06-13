@@ -703,10 +703,9 @@ BOOL UpdateBlock( HANDLE hUpdate, PSTRINGBLOCK pStrBlock, int nBlockID, WORD wLa
 }
 
 
-//
-//  [exported] ReadResourceString
+//++ [exported] ReadResourceString
 //  ----------------------------------------------------------------------
-//  Example:
+//+ Example:
 //    NSutils::ReadResourceString "$INSTDIR\Test.exe" 100 1033
 //    Pop $0
 //    ${If} $0 != ""
@@ -714,7 +713,7 @@ BOOL UpdateBlock( HANDLE hUpdate, PSTRINGBLOCK pStrBlock, int nBlockID, WORD wLa
 //    ${Else}
 //      ;Error
 //    ${EndIf}
-//
+
 void __declspec(dllexport) ReadResourceString(
 	HWND hWndParent,
 	int string_size,
@@ -784,10 +783,9 @@ void __declspec(dllexport) ReadResourceString(
 }
 
 
-//
-//  [exported] WriteResourceString
+//++ [exported] WriteResourceString
 //  ----------------------------------------------------------------------
-//  Example:
+//+ Example:
 //    NSutils::WriteResourceString "$INSTDIR\Test.exe" 100 1033 "The string"
 //    Pop $0
 //    ${If} $0 != ""
@@ -795,7 +793,7 @@ void __declspec(dllexport) ReadResourceString(
 //    ${Else}
 //      ;Error
 //    ${EndIf}
-//
+
 void __declspec(dllexport) WriteResourceString(
 	HWND hWndParent,
 	int string_size,

@@ -3,7 +3,7 @@
 #include "nsiswapi\pluginapi.h"
 
 
-// [not exported] RegistryParsePath
+//++ [not exported] RegistryParsePath
 BOOLEAN RegistryParsePath(
 	__in LPCTSTR szFullPath,		/// ex: "HKLM\Software\Microsoft\Whatever"
 	__out PHKEY phRoot,				/// Receives HKLM
@@ -79,7 +79,7 @@ int CallbackMultiSzInsertAtIndex( __in int iSubstrIndex, __in LPCTSTR pszSubstr,
 	return MULTISZ_ACTION_NONE;
 }
 
-// [not exported] RegMultiSzInsertImpl
+//++ [not exported] RegMultiSzInsertImpl
 DWORD RegMultiSzInsertImpl(
 	__in LPCTSTR szRegKey,
 	__in_opt LPCTSTR szRegValue,
@@ -185,7 +185,7 @@ DWORD RegMultiSzInsertImpl(
 }
 
 
-// [not exported] RegMultiSzDeleteImpl
+//++ [not exported] RegMultiSzDeleteImpl
 DWORD RegMultiSzDeleteImpl(
 	__in LPCTSTR szRegKey,
 	__in_opt LPCTSTR szRegValue,
@@ -262,7 +262,7 @@ DWORD RegMultiSzDeleteImpl(
 }
 
 
-// [not exported] RegMultiSzReadImpl
+//++ [not exported] RegMultiSzReadImpl
 DWORD RegMultiSzReadImpl(
 	__in LPCTSTR szRegKey,
 	__in_opt LPCTSTR szRegValue,
@@ -330,21 +330,20 @@ DWORD RegMultiSzReadImpl(
 }
 
 
-//
-//  [exported] RegMultiSzInsertAfter
+//++ [exported] RegMultiSzInsertAfter
 //  ----------------------------------------------------------------------
-//  Input:
+//+ Input:
 //    [Stack] Registry key (ex: "HKCU\Software\MyCompany")
 //    [Stack] Registry value. If empty, the default (unnamed) value is set
 //    [Stack] Additional key flags (ex: KEY_WOW64_64KEY)
 //    [Stack] Substring to insert
 //    [Stack] Substring to insert after (optional)
-//  Output:
+//+ Output:
 //    [Stack] Win32 error
-//  Example:
+//+ Example:
 //    NSutils::RegMultiSzInsertAfter /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} "Line 4" "Line 3"
 //    Pop $0	; Win32 error
-//
+
 __declspec(dllexport)
 void RegMultiSzInsertAfter(
 	HWND hWndParent,
@@ -410,21 +409,20 @@ void RegMultiSzInsertAfter(
 }
 
 
-//
-//  [exported] RegMultiSzInsertBefore
+//++ [exported] RegMultiSzInsertBefore
 //  ----------------------------------------------------------------------
-//  Input:
+//+ Input:
 //    [Stack] Registry key (ex: "HKCU\Software\MyCompany")
 //    [Stack] Registry value. If empty, the default (unnamed) value is set
 //    [Stack] Additional key flags (ex: KEY_WOW64_64KEY)
 //    [Stack] Substring to insert
 //    [Stack] Substring to insert before (optional)
-//  Output:
+//+ Output:
 //    [Stack] Win32 error
-//  Example:
+//+ Example:
 //    NSutils::RegMultiSzInsertBefore /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} "Line 4" "Line 5"
 //    Pop $0	; Win32 error
-//
+
 __declspec(dllexport)
 void RegMultiSzInsertBefore(
 	HWND hWndParent,
@@ -490,21 +488,20 @@ void RegMultiSzInsertBefore(
 }
 
 
-//
-//  [exported] RegMultiSzInsertAtIndex
+//++ [exported] RegMultiSzInsertAtIndex
 //  ----------------------------------------------------------------------
-//  Input:
+//+ Input:
 //    [Stack] Registry key (ex: "HKLM\Software\MyCompany")
 //    [Stack] Registry value. If empty, the default (unnamed) value is set
 //    [Stack] Additional key flags (ex: KEY_WOW64_64KEY)
 //    [Stack] Substring to insert
 //    [Stack] Zero based index (optional)
-//  Output:
+//+ Output:
 //    [Stack] Win32 error
-//  Example:
+//+ Example:
 //    NSutils::RegMultiSzInsertBefore [/NOUNLOAD] "HKLM\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} "Line 4" "Line 5"
 //    Pop $0	; Win32 error
-//
+
 __declspec(dllexport)
 void RegMultiSzInsertAtIndex(
 	HWND hWndParent,
@@ -569,21 +566,20 @@ void RegMultiSzInsertAtIndex(
 }
 
 
-//
-//  [exported] RegMultiSzDelete
+//++ [exported] RegMultiSzDelete
 //  ----------------------------------------------------------------------
-//  Input:
+//+ Input:
 //    [Stack] Registry key (ex: "HKCU\Software\MyCompany")
 //    [Stack] Registry value. If empty, the default (unnamed) value is set
 //    [Stack] Additional key flags (ex: KEY_WOW64_64KEY)
 //    [Stack] Substring to delete
 //    [Stack] Remove the registry value if it becomes empty (BOOL)
-//  Output:
+//+ Output:
 //    [Stack] Win32 error
-//  Example:
+//+ Example:
 //    NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} "Line 4" ${TRUE}
 //    Pop $0	; Win32 error
-//
+
 __declspec(dllexport)
 void RegMultiSzDelete(
 	HWND hWndParent,
@@ -648,22 +644,21 @@ void RegMultiSzDelete(
 }
 
 
-//
-//  [exported] RegMultiSzRead
+//++ [exported] RegMultiSzRead
 //  ----------------------------------------------------------------------
-//  Input:
+//+ Input:
 //    [Stack] Registry key (ex: "HKCU\Software\MyCompany")
 //    [Stack] Registry value. If empty, the default (unnamed) value is set
 //    [Stack] Additional key flags (ex: KEY_WOW64_64KEY)
 //    [Stack] Index (substring to read)
-//  Output:
+//+ Output:
 //    [Stack] Win32 error
 //    [Stack] The substring at specified index, or an empty string
-//  Example:
+//+ Example:
 //    NSutils::RegMultiSzRead /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} 2
 //    Pop $0	; Win32 error
 //    Pop $1	; Substring at index 2
-//
+
 __declspec(dllexport)
 void RegMultiSzRead(
 	HWND hWndParent,
@@ -820,6 +815,7 @@ DWORD RegBinaryWriteBufImpl(
 //+ Example:
 //    NSutils::RegBinaryInsertString /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} 100 "My string"
 //    Pop $0; Win32 error
+
 __declspec(dllexport)
 void RegBinaryInsertString(
 	HWND hWndParent,

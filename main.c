@@ -6,9 +6,7 @@ HINSTANCE g_hModule = NULL;
 // Notifications
 extern VOID UtilsUnload();
 
-//
-// DllMain
-//
+//++ DllMain
 BOOL WINAPI DllMain(
 	HINSTANCE hInst,
 	ULONG ul_reason_for_call,
