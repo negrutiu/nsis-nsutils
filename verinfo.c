@@ -250,7 +250,7 @@ DWORD ReadFixedFileInfo(
 //    ${EndIf}
 
 void __declspec(dllexport) GetVersionInfoString(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -261,12 +261,7 @@ void __declspec(dllexport) GetVersionInfoString(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store an NSIS string
@@ -315,7 +310,7 @@ void __declspec(dllexport) GetVersionInfoString(
 //    ${EndIf}
 
 void __declspec(dllexport) GetFileVersion(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -326,12 +321,7 @@ void __declspec(dllexport) GetFileVersion(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
@@ -392,7 +382,7 @@ void __declspec(dllexport) GetFileVersion(
 //    ${EndIf}
 
 void __declspec(dllexport) GetProductVersion(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -403,12 +393,7 @@ void __declspec(dllexport) GetProductVersion(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string

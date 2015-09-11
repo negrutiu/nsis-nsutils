@@ -346,7 +346,7 @@ DWORD RegMultiSzReadImpl(
 
 __declspec(dllexport)
 void RegMultiSzInsertAfter(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -358,12 +358,7 @@ void RegMultiSzInsertAfter(
 
 	// Cache global structures
 	EXDLL_INIT();
-
-	// Check NSIS API compatibility
-	if (!IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
@@ -425,7 +420,7 @@ void RegMultiSzInsertAfter(
 
 __declspec(dllexport)
 void RegMultiSzInsertBefore(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -437,12 +432,7 @@ void RegMultiSzInsertBefore(
 
 	// Cache global structures
 	EXDLL_INIT();
-
-	// Check NSIS API compatibility
-	if (!IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
@@ -504,7 +494,7 @@ void RegMultiSzInsertBefore(
 
 __declspec(dllexport)
 void RegMultiSzInsertAtIndex(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -516,12 +506,7 @@ void RegMultiSzInsertAtIndex(
 
 	// Cache global structures
 	EXDLL_INIT();
-
-	// Check NSIS API compatibility
-	if (!IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
@@ -582,7 +567,7 @@ void RegMultiSzInsertAtIndex(
 
 __declspec(dllexport)
 void RegMultiSzDelete(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -594,12 +579,7 @@ void RegMultiSzDelete(
 
 	// Cache global structures
 	EXDLL_INIT();
-
-	// Check NSIS API compatibility
-	if (!IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
@@ -661,7 +641,7 @@ void RegMultiSzDelete(
 
 __declspec(dllexport)
 void RegMultiSzRead(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -674,12 +654,7 @@ void RegMultiSzRead(
 
 	// Cache global structures
 	EXDLL_INIT();
-
-	// Check NSIS API compatibility
-	if (!IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	// Init
 	szSubstr[0] = 0;
@@ -818,7 +793,7 @@ DWORD RegBinaryWriteBufImpl(
 
 __declspec(dllexport)
 void RegBinaryInsertString(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -830,12 +805,7 @@ void RegBinaryInsertString(
 
 	// Cache global structures
 	EXDLL_INIT();
-
-	// Check NSIS API compatibility
-	if (!IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string

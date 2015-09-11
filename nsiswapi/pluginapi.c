@@ -23,15 +23,7 @@ unsigned int g_stringsize = 0;
 stack_t **g_stacktop = NULL;
 LPTSTR g_variables = NULL;
 extra_parameters *g_ep = NULL;
-
-// IsCompatibleApiVersion
-BOOL NSISCALL IsCompatibleApiVersion()
-{
-	if ( g_ep && g_ep->exec_flags ) {
-		return ( g_ep->exec_flags->plugin_api_version == NSISPIAPIVER_CURR ) ? TRUE : FALSE;
-	}
-	return TRUE;
-}
+HWND g_hwndparent = NULL;
 
 // utility functions (not required but often useful)
 
@@ -79,7 +71,7 @@ void NSISCALL setuservariable(const int varnum, LPCTSTR var)
     lstrcpy(g_variables + varnum*g_stringsize, var);
 }
 
-#ifdef _UNICODE
+#ifdef UNICODE
 int NSISCALL PopStringA(LPSTR ansiStr)
 {
    LPWSTR wideStr = (LPWSTR) GlobalAlloc(GPTR, g_stringsize*sizeof(WCHAR));

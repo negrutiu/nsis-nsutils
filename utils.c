@@ -474,7 +474,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 //    ${EndIf}
 
 void __declspec(dllexport) ExecutePendingFileRenameOperations(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -485,12 +485,7 @@ void __declspec(dllexport) ExecutePendingFileRenameOperations(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
@@ -609,7 +604,7 @@ LRESULT CALLBACK ProgressBarWndProc(
 //    /NOUNLOAD is mandatory for obvious reasons...
 
 void __declspec(dllexport) DisableProgressStepBack(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -620,12 +615,7 @@ void __declspec(dllexport) DisableProgressStepBack(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	///	Param1: Progress bar handle
@@ -651,7 +641,7 @@ void __declspec(dllexport) DisableProgressStepBack(
 //    NSutils::RestoreProgressStepBack /NOUNLOAD $mui.InstFilesPage.ProgressBar
 
 void __declspec(dllexport) RestoreProgressStepBack(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -662,12 +652,7 @@ void __declspec(dllexport) RestoreProgressStepBack(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	///	Param1: Progress bar handle
@@ -692,7 +677,7 @@ void __declspec(dllexport) RestoreProgressStepBack(
 //    NSutils::RedirectProgressBar /NOUNLOAD $mui.InstFilesPage.ProgressBar $mui.MyProgressBar
 
 void __declspec(dllexport) RedirectProgressBar(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -703,12 +688,7 @@ void __declspec(dllexport) RedirectProgressBar(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 
@@ -828,7 +808,7 @@ LRESULT CALLBACK MainWndProc(
 //    NSutils::StartTimer /NOUNLOAD $0 1000
 
 void __declspec(dllexport) StartTimer(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -840,12 +820,7 @@ void __declspec(dllexport) StartTimer(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 
@@ -856,18 +831,18 @@ void __declspec(dllexport) StartTimer(
 	iPeriod = popint();
 
 	// SetTimer
-	if (( iCallback != 0 ) && ( iPeriod > 0 ) && hWndParent && IsWindow( hWndParent )) {
+	if (( iCallback != 0 ) && ( iPeriod > 0 ) && parent && IsWindow( parent )) {
 
-		if ( MySubclassWindow( hWndParent, MainWndProc ) > 0 ) {
+		if ( MySubclassWindow( parent, MainWndProc ) > 0 ) {
 
 			/// Remember the NSIS callback for later. Needed for validations
 			TCHAR szPropName[128];
 			wsprintf( szPropName, PROP_WMTIMER_CALLBACK, iCallback );
-			SetProp( hWndParent, szPropName, (HANDLE)TRUE );
+			SetProp( parent, szPropName, (HANDLE)TRUE );
 
 			/// Start the timer
 			/// Use the NSIS callback as timer ID
-			SetTimer( hWndParent, iCallback, iPeriod, NULL );
+			SetTimer( parent, iCallback, iPeriod, NULL );
 		}
 	}
 }
@@ -884,7 +859,7 @@ void __declspec(dllexport) StartTimer(
 //    NSutils::StopTimer $0
 
 void __declspec(dllexport) StopTimer(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -895,12 +870,7 @@ void __declspec(dllexport) StopTimer(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 
@@ -908,16 +878,16 @@ void __declspec(dllexport) StopTimer(
 	iCallback = popint();
 
 	// Kill the timer
-	if (( iCallback != 0 ) && hWndParent && IsWindow( hWndParent )) {
+	if (( iCallback != 0 ) && parent && IsWindow( parent )) {
 
-		KillTimer( hWndParent, iCallback );
-		MyUnsubclassWindow( hWndParent );
+		KillTimer( parent, iCallback );
+		MyUnsubclassWindow( parent );
 
 		/// Forget this NSIS callback
 		if ( TRUE ) {
 			TCHAR szPropName[128];
 			wsprintf( szPropName, PROP_WMTIMER_CALLBACK, iCallback );
-			RemoveProp( hWndParent, szPropName );
+			RemoveProp( parent, szPropName );
 		}
 	}
 }
@@ -944,7 +914,7 @@ void __declspec(dllexport) StopTimer(
 //    NSutils::StopReceivingClicks /NOUNLOAD $HWNDPARENT $0
 
 void __declspec(dllexport) StartReceivingClicks(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -956,12 +926,7 @@ void __declspec(dllexport) StartReceivingClicks(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 
@@ -987,7 +952,7 @@ void __declspec(dllexport) StartReceivingClicks(
 
 //++ StopReceivingClicks
 void __declspec(dllexport) StopReceivingClicks(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -998,12 +963,7 @@ void __declspec(dllexport) StopReceivingClicks(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 
@@ -1157,7 +1117,7 @@ DWORD FindPendingFileRenameOperationsImpl(
 //    ${EndIf}
 
 void __declspec(dllexport) FindPendingFileRenameOperations(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -1168,12 +1128,7 @@ void __declspec(dllexport) FindPendingFileRenameOperations(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
@@ -1270,7 +1225,7 @@ LRESULT CALLBACK MessageLoopRejectCloseWndProc( __in int code, __in WPARAM wPara
 //    NSutils::RejectCloseMessages false
 
 void __declspec(dllexport) RejectCloseMessages(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -1281,12 +1236,7 @@ void __declspec(dllexport) RejectCloseMessages(
 
 	// Cache global structures
 	EXDLL_INIT();
-
-	// Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
@@ -1626,7 +1576,7 @@ ULONG CloseFileHandlesImpl(
 //    Pop $0	; The number of closed handles
 
 void __declspec(dllexport) CloseFileHandles(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -1638,12 +1588,7 @@ void __declspec(dllexport) CloseFileHandles(
 
 	// Cache global structures
 	EXDLL_INIT();
-
-	// Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
@@ -1689,7 +1634,7 @@ void __declspec(dllexport) CloseFileHandles(
 //    ${EndIf}
 
 void __declspec(dllexport) CPUID(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -1702,12 +1647,7 @@ void __declspec(dllexport) CPUID(
 
 	// Cache global structures
 	EXDLL_INIT();
-
-	// Check NSIS API compatibility
-	if (!IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	// Input
 	iFnId = (UINT)popint();
@@ -1742,7 +1682,7 @@ void __declspec(dllexport) CPUID(
 //    [Stack] TRUE/FALSE
 
 void __declspec(dllexport) CompareFiles(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -1754,12 +1694,7 @@ void __declspec(dllexport) CompareFiles(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if (!IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
@@ -1959,7 +1894,7 @@ HRESULT RemoveSoftwareRestrictionPoliciesImpl(
 //    Pop $1 ; Removed policy count
 
 void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -1970,12 +1905,7 @@ void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string

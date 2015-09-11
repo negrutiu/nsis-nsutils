@@ -715,7 +715,7 @@ BOOL UpdateBlock( HANDLE hUpdate, PSTRINGBLOCK pStrBlock, int nBlockID, WORD wLa
 //    ${EndIf}
 
 void __declspec(dllexport) ReadResourceString(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -726,12 +726,7 @@ void __declspec(dllexport) ReadResourceString(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store an NSIS string
@@ -795,7 +790,7 @@ void __declspec(dllexport) ReadResourceString(
 //    ${EndIf}
 
 void __declspec(dllexport) WriteResourceString(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -806,12 +801,7 @@ void __declspec(dllexport) WriteResourceString(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store an NSIS string

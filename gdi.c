@@ -363,7 +363,7 @@ DWORD LoadImageFileImpl(
 //    ${EndIf}
 
 void __declspec(dllexport) LoadImageFile(
-	HWND hWndParent,
+	HWND parent,
 	int string_size,
 	TCHAR *variables,
 	stack_t **stacktop,
@@ -374,12 +374,7 @@ void __declspec(dllexport) LoadImageFile(
 
 	//	Cache global structures
 	EXDLL_INIT();
-
-	//	Check NSIS API compatibility
-	if ( !IsCompatibleApiVersion()) {
-		/// TODO: display an error message?
-		return;
-	}
+	EXDLL_VALIDATE();
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store an NSIS string
