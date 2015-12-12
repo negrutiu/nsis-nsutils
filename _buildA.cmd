@@ -6,8 +6,12 @@ set OUTNAME=NSutils
 
 set BUILD_SUCCESSFUL=0
 
+
 if defined PROGRAMFILES(X86) set PF=%PROGRAMFILES(X86)%
 if not defined PROGRAMFILES(X86) set PF=%PROGRAMFILES%
+
+set VCVARSALL=%PF%\Microsoft Visual Studio 14.0\VC\VcVarsAll.bat
+if exist "%VCVARSALL%" goto :BUILD
 
 set VCVARSALL=%PF%\Microsoft Visual Studio 12.0\VC\VcVarsAll.bat
 if exist "%VCVARSALL%" goto :BUILD
@@ -18,7 +22,7 @@ if exist "%VCVARSALL%" goto :BUILD
 set VCVARSALL=%PF%\Microsoft Visual Studio 10.0\VC\VcVarsAll.bat
 if exist "%VCVARSALL%" goto :BUILD
 
-echo ERROR: Can't find Visual Studio 2010/2012
+echo ERROR: Can't find Visual Studio 2010/2012/2013/2015
 pause
 goto :EOF
 
@@ -36,7 +40,7 @@ cl.exe "main.c" "verinfo.c" "registry.c" "utils.c" "strblock.c" "gdi.c" "nsiswap
 
 if %BUILD_SUCCESSFUL%==1 (
 	echo Success!
-	rem pause
+	::pause
 ) else (
 	pause
 )
