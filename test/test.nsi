@@ -15,10 +15,10 @@
 # The folder where NSutils.dll is
 !ifdef NSIS_UNICODE
 	!define NSUTILS "$EXEDIR\..\DebugW\NSutils.dll"		; DEBUGGING_ENABLED
-	!AddPluginDir "..\ReleaseW"
+	!AddPluginDir "..\ReleaseW-nocrt"
 !else
 	!define NSUTILS "$EXEDIR\..\DebugA\NSutils.dll"		; DEBUGGING_ENABLED
-	!AddPluginDir "..\ReleaseA"
+	!AddPluginDir "..\ReleaseA-nocrt"
 !endif
 
 !define ERROR_SUCCESS 0
@@ -202,7 +202,7 @@ Section /o "Test PendingFileRenameOperations (requires Admin)"
 
 	;Push "$EXEDIR\PendingFileRename.log"
 	;Push "MyNotepad"
-	;CallInstDLL "$EXEDIR\..\DebugW\NSutils.dll" ExecutePendingFileRenameOperations
+	;CallInstDLL "${NSUTILS}" ExecutePendingFileRenameOperations
 	NSutils::ExecutePendingFileRenameOperations /NOUNLOAD "MyNotepad" "$EXEDIR\PendingFileRename.log"
 	Pop $0
 	Pop $1
@@ -228,7 +228,7 @@ Section /o "Test FindFileRenameOperations"
 
 	StrCpy $R0 "temp"	; Substring to find
 	;Push $R0
-	;CallInstDLL "$EXEDIR\..\DebugW\NSutils.dll" FindPendingFileRenameOperations
+	;CallInstDLL "${NSUTILS}" FindPendingFileRenameOperations
 	NSutils::FindPendingFileRenameOperations /NOUNLOAD $R0
 	Pop $0
 	${Print} 'FindPendingFileRenameOperations( "$R0" ) == "$0"'
@@ -302,14 +302,14 @@ Section /o "Test close file handles"
 
 	${Print} 'Close "hosts" file handles'
 	;Push "$SYSDIR\drivers\etc\hosts"
-	;CallInstDLL "$EXEDIR\..\DebugW\NSutils.dll" CloseFileHandles
+	;CallInstDLL "${NSUTILS}" CloseFileHandles
 	NSutils::CloseFileHandles /NOUNLOAD "$SYSDIR\drivers\etc\hosts"
 	Pop $0
 	${Print} '  $0 closed'
 
 	${Print} 'Close "$DESKTOP\test.txt" file handles'
 	;Push "$DESKTOP\test.txt"
-	;CallInstDLL "$EXEDIR\..\DebugW\NSutils.dll" CloseFileHandles
+	;CallInstDLL "${NSUTILS}" CloseFileHandles
 	NSutils::CloseFileHandles /NOUNLOAD "$DESKTOP\test.txt"
 	Pop $0
 	${Print} '  $0 closed'

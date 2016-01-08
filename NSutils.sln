@@ -1,24 +1,32 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NSutils", "NSutils.vcxproj", "{FA391322-C61F-4CC4-A421-43210C3D5342}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug-ANSI|Win32 = Debug-ANSI|Win32
-		Debug-UNICODE|Win32 = Debug-UNICODE|Win32
-		Release-ANSI|Win32 = Release-ANSI|Win32
-		Release-UNICODE|Win32 = Release-UNICODE|Win32
+		DebugA|Win32 = DebugA|Win32
+		DebugW|Win32 = DebugW|Win32
+		ReleaseA-nocrt|Win32 = ReleaseA-nocrt|Win32
+		ReleaseA-staticcrt|Win32 = ReleaseA-staticcrt|Win32
+		ReleaseW-nocrt|Win32 = ReleaseW-nocrt|Win32
+		ReleaseW-staticcrt|Win32 = ReleaseW-staticcrt|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Debug-ANSI|Win32.ActiveCfg = Debug-ANSI|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Debug-ANSI|Win32.Build.0 = Debug-ANSI|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Debug-UNICODE|Win32.ActiveCfg = Debug-UNICODE|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Debug-UNICODE|Win32.Build.0 = Debug-UNICODE|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-ANSI|Win32.ActiveCfg = Release-ANSI|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-ANSI|Win32.Build.0 = Release-ANSI|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-UNICODE|Win32.ActiveCfg = Release-UNICODE|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-UNICODE|Win32.Build.0 = Release-UNICODE|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.DebugA|Win32.ActiveCfg = DebugA|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.DebugA|Win32.Build.0 = DebugA|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.DebugW|Win32.ActiveCfg = DebugW|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.DebugW|Win32.Build.0 = DebugW|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.ReleaseA-nocrt|Win32.ActiveCfg = ReleaseA-nocrt|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.ReleaseA-nocrt|Win32.Build.0 = ReleaseA-nocrt|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.ReleaseA-staticcrt|Win32.ActiveCfg = ReleaseA-staticcrt|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.ReleaseA-staticcrt|Win32.Build.0 = ReleaseA-staticcrt|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.ReleaseW-nocrt|Win32.ActiveCfg = ReleaseW-nocrt|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.ReleaseW-nocrt|Win32.Build.0 = ReleaseW-nocrt|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.ReleaseW-staticcrt|Win32.ActiveCfg = ReleaseW-staticcrt|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.ReleaseW-staticcrt|Win32.Build.0 = ReleaseW-staticcrt|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
