@@ -1,7 +1,7 @@
-#include <windows.h>
+
+#include "main.h"
 #include <CommCtrl.h>
 #include <Shlwapi.h>
-#include "nsiswapi\pluginapi.h"
 #include <intrin.h>
 
 
@@ -9,6 +9,10 @@
 #include <prsht.h>
 #include <GPEdit.h>
 #pragma comment (lib, "GPEdit.lib")
+
+#ifndef PBM_SETSTATE
+	#define PBM_SETSTATE (WM_USER+16)
+#endif
 
 
 // Globals
@@ -235,21 +239,6 @@ void * __cdecl memmove (
 {
         void * ret = dst;
 
-#if defined (_M_X64)
-
-        {
-
-
-        __declspec(dllimport)
-
-
-        void RtlMoveMemory( void *, const void *, size_t count );
-
-        RtlMoveMemory( dst, src, count );
-
-        }
-
-#else  /* defined (_M_X64) */
         if (dst <= src || (char *)dst >= ((char *)src + count)) {
                 /*
                  * Non-Overlapping Buffers
@@ -275,7 +264,6 @@ void * __cdecl memmove (
                         src = (char *)src - 1;
                 }
         }
-#endif  /* defined (_M_X64) */
 
         return(ret);
 }
@@ -768,7 +756,7 @@ LRESULT CALLBACK MainWndProc(
 		{
 			if ( HIWORD( wParam ) == BN_CLICKED ) {
 
-				int iNsisCallback = (int)GetProp( hWnd, PROP_BNCLICKED_CALLBACK );
+				int iNsisCallback = HandleToULong( GetProp( hWnd, PROP_BNCLICKED_CALLBACK ) );
 				if ( iNsisCallback != 0 ) {
 					pushintptr( LOWORD( wParam ));		/// Button control ID
 					pushintptr( lParam );				/// Button HWND
@@ -940,11 +928,11 @@ void __declspec(dllexport) StartReceivingClicks(
 
 		if ( GetProp( hBtnParentWnd, PROP_BNCLICKED_CALLBACK ) != NULL ) {
 			/// Already receiving clicks from this window. Just update the callback
-			SetProp( hBtnParentWnd, PROP_BNCLICKED_CALLBACK, (HANDLE)iCallback );
+			SetProp( hBtnParentWnd, PROP_BNCLICKED_CALLBACK, ULongToHandle( iCallback ) );
 		} else {
 			/// Subclass the window and start receiving button clicks
 			if ( MySubclassWindow( hBtnParentWnd, MainWndProc ) > 0 ) {
-				SetProp( hBtnParentWnd, PROP_BNCLICKED_CALLBACK, (HANDLE)iCallback );
+				SetProp( hBtnParentWnd, PROP_BNCLICKED_CALLBACK, ULongToHandle( iCallback ) );
 			}
 		}
 	}
@@ -1473,7 +1461,7 @@ ULONG CloseFileHandlesImpl(
 					continue;
 
 				/* Duplicate the handle so we can query it. */
-				status = NtDuplicateObject( processHandle, (HANDLE)handle.Handle, GetCurrentProcess(), &dupHandle, 0, 0, 0 );
+				status = NtDuplicateObject( processHandle, ULongToHandle( handle.Handle ), GetCurrentProcess(), &dupHandle, 0, 0, 0 );
 				if (NT_SUCCESS(status)) {
 
 					/* Query the object type. */
@@ -1504,7 +1492,7 @@ ULONG CloseFileHandlesImpl(
 									if ( CompareStringW( 0, NORM_IGNORECASE, pObjectName->Buffer, pObjectName->Length / 2, pszHandleNameW, -1 ) == CSTR_EQUAL )
 									{
 										HANDLE dupCloseHandle;
-										status = NtDuplicateObject(processHandle, (HANDLE)handle.Handle, GetCurrentProcess(), &dupCloseHandle, 0, 0, DUPLICATE_CLOSE_SOURCE);
+										status = NtDuplicateObject(processHandle, ULongToHandle( handle.Handle ), GetCurrentProcess(), &dupCloseHandle, 0, 0, DUPLICATE_CLOSE_SOURCE);
 										if (NT_SUCCESS(status))
 											CloseHandle(dupCloseHandle);
 										/*printf("NtDuplicateObject( pid:%u, handle:%u, type:%.*S, name:%.*S, DUPLICATE_CLOSE_SOURCE ) == 0x%x\n", handle.ProcessId, (ULONG)handle.Handle, objectTypeInfo->Name.Length / 2, objectTypeInfo->Name.Buffer, pObjectName->Length / 2, pObjectName->Buffer, status);*/
@@ -1641,7 +1629,6 @@ void __declspec(dllexport) CPUID(
 	extra_parameters *extra
 	)
 {
-	DWORD err = ERROR_SUCCESS;
 	UINT iFnId;
 	UINT regs[4];	/// {EAX, EBX, ECX, EDX}
 
@@ -1657,12 +1644,12 @@ void __declspec(dllexport) CPUID(
 		/// Standard functions
 		__cpuid( regs, 0 );
 		if (iFnId > 0 && iFnId <= regs[0])
-			__cpuidex( regs, iFnId, 0 );
+			__cpuid( regs, iFnId );
 	} else {
 		/// Extended functions
 		__cpuid( regs, 0x80000000 );
 		if (iFnId > 0x80000000 && iFnId <= regs[0])
-			__cpuidex( regs, iFnId, 0 );
+			__cpuid( regs, iFnId );
 	}
 
 	// Output

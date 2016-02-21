@@ -1,5 +1,5 @@
-#include <windows.h>
-#include "nsiswapi\pluginapi.h"
+
+#include "main.h"
 
 #define COBJMACROS
 #include <OleCtl.h>
@@ -311,7 +311,7 @@ DWORD LoadImageFileImpl(
 		pszW[0] = UNICODE_NULL;
 		MultiByteToWideChar( CP_ACP, 0, pszFilePath, -1, pszW, ARRAYSIZE(pszW));
 #endif
-		err = OleLoadPicturePath((LPOLESTR)pszW, NULL, 0, 0, &IID_IPicture, &pIPicture );
+		err = OleLoadPicturePath((LPOLESTR)pszW, NULL, 0, 0, &IID_IPicture, (LPVOID)&pIPicture );
 		if ( SUCCEEDED( err )) {
 
 			// Make sure it's stored in memory as HBITMAP (as opposed to HICON, HMETAFILE, HENHMETAFILE, etc.)
@@ -327,7 +327,7 @@ DWORD LoadImageFileImpl(
 					if ( SUCCEEDED( err )) {
 
 						// Resize
-						err = ResampleBitmap((HBITMAP)hIPictureHandle, iWidth, iHeight, iAlignHorz, iAlignVert, phBitmap );
+						err = ResampleBitmap( ULongToHandle( hIPictureHandle ), iWidth, iHeight, iAlignHorz, iAlignVert, phBitmap );
 					}
 
 				} else {

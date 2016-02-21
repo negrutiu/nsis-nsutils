@@ -1,6 +1,5 @@
 
-#include <windows.h>
-#include "nsiswapi\pluginapi.h"
+#include "main.h"
 
 
 //++ [not exported] RegistryParsePath
@@ -73,7 +72,7 @@ int CallbackMultiSzInsertAfter( __in int iSubstrIndex, __in LPCTSTR pszSubstr, _
 
 int CallbackMultiSzInsertAtIndex( __in int iSubstrIndex, __in LPCTSTR pszSubstr, __in PVOID pParam )
 {
-	int iInsertAtIndex = (int)pParam;
+	int iInsertAtIndex = PtrToInt( pParam );
 	if (iSubstrIndex == iInsertAtIndex)
 		return MULTISZ_ACTION_INSERT_BEFORE;
 	return MULTISZ_ACTION_NONE;
@@ -534,7 +533,7 @@ void RegMultiSzInsertAtIndex(
 					iIndex = popint();
 
 					// Insert substring
-					err = RegMultiSzInsertImpl( szRegKey, szRegValue, dwFlags, szInsert, CallbackMultiSzInsertAtIndex, (PVOID)iIndex );
+					err = RegMultiSzInsertImpl( szRegKey, szRegValue, dwFlags, szInsert, CallbackMultiSzInsertAtIndex, ULongToPtr( iIndex ) );
 				}
 			}
 		}

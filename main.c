@@ -1,4 +1,5 @@
-#include <windows.h>
+
+#include "main.h"
 
 // Global variables
 HINSTANCE g_hModule = NULL;

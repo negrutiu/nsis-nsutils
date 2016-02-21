@@ -17,9 +17,8 @@
 
 #pragma warning( disable: 4995 )
 
-#include <windows.h>
+#include "main.h"
 #include "strblock.h"
-#include "nsiswapi\pluginapi.h"
 
 
 // The format of string resources is explained below.

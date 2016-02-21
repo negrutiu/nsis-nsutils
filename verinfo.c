@@ -1,6 +1,5 @@
 
-#include <windows.h>
-#include "nsiswapi\pluginapi.h"
+#include "main.h"
 
 //++ FindFirstStringFileInfo
 BOOL FindFirstStringFileInfo(
@@ -9,7 +8,8 @@ BOOL FindFirstStringFileInfo(
 	__out LPWSTR *ppszChildKeyW
 	)
 {
-	#define P (*pp)
+	LPWORD P = (LPWORD)*pp;		/// WORD pointer
+	LPBYTE p = (LPBYTE)P;		/// BYTE pointer
 	LPWORD pBlock = P;
 	WORD iBlockSize = *P;
 
@@ -27,7 +27,7 @@ BOOL FindFirstStringFileInfo(
 		pszKeyW = (LPWSTR)P;
 		for ( ; *P != UNICODE_NULL; P++ ); P++;
 
-		(LPBYTE)P += ((LPBYTE)P - (LPBYTE)pBlock) % 4;		/// DWORD padding
+		p += ((LPBYTE)P - (LPBYTE)pBlock) % 4;		/// DWORD padding
 
 		if ( iValueLength > 0 ) {
 
@@ -35,10 +35,10 @@ BOOL FindFirstStringFileInfo(
 			if ( iType == 1 ) {
 				for ( ; *P != UNICODE_NULL; P++ ); P++;		/// Note: iValueLength is not quite reliable. In some executables (most of them) iValueLength means WCHAR-s, while in others (ResHacker.exe) it means bytes.
 			} else {
-				(LPBYTE)P += iValueLength;
+				p += iValueLength;
 			}
 
-			(LPBYTE)P += ((LPBYTE)P - (LPBYTE)pBlock) % 4;	/// DWORD padding
+			p += ((LPBYTE)P - (LPBYTE)pBlock) % 4;	/// DWORD padding
 		}
 
 		// Find the first child of "StringFileInfo" block

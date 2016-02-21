@@ -15,10 +15,10 @@
 # The folder where NSutils.dll is
 !ifdef NSIS_UNICODE
 	!define NSUTILS "$EXEDIR\..\DebugW\NSutils.dll"		; DEBUGGING_ENABLED
-	!AddPluginDir "..\ReleaseW-nocrt"
+	!AddPluginDir "..\ReleaseW-mingw"
 !else
 	!define NSUTILS "$EXEDIR\..\DebugA\NSutils.dll"		; DEBUGGING_ENABLED
-	!AddPluginDir "..\ReleaseA-nocrt"
+	!AddPluginDir "..\ReleaseA-mingw"
 !endif
 
 !define ERROR_SUCCESS 0
