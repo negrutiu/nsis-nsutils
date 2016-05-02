@@ -43,6 +43,8 @@ SpaceTexts "none"
 
 XPStyle on
 RequestExecutionLevel user ; don't require UAC elevation
+ManifestDPIAware true
+ManifestSupportedOS all
 ShowInstDetails show
 
 !define Print DetailPrint
