@@ -310,7 +310,7 @@ Section /o "Test string table manipulation"
 SectionEnd
 
 
-Section "Test close file handles"
+Section /o "Test close file handles"
 
 	${Print} "--------------------------------------------------------------"
 	${DisableX64FSRedirection}
