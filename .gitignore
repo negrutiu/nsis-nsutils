@@ -1,8 +1,8 @@
 
 DebugA
 DebugW
-ReleaseA
-ReleaseW
+ReleaseA*
+ReleaseW*
 ipch
 
 *.opensdf
