@@ -39,6 +39,9 @@
     <ClCompile Include="registry.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="handles.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nsiswapi\api.h">

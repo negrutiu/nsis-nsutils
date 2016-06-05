@@ -9,6 +9,7 @@
 !include "LogicLib.nsh"
 !include "x64.nsh"
 !include "FileFunc.nsh"
+!include "Win\WinNT.nsh"
 
 ;!define DEBUGGING_ENABLED
 
@@ -202,12 +203,15 @@ Section /o "Test PendingFileRenameOperations (requires Admin)"
 	System::Call 'kernel32::MoveFileEx( t "$DESKTOP\MyNotepad.exe", t "$DESKTOP\MyNotepad2.exe", i ${MOVEFILE_DELAY_UNTIL_REBOOT} ) i.r0'
 	${Print} 'MoveFileEx( "DESKTOP\MyNotepad.exe", "DESKTOP\MyNotepad2.exe", MOVEFILE_DELAY_UNTIL_REBOOT ) == $0'
 
-	;Push "$EXEDIR\PendingFileRename.log"
-	;Push "MyNotepad"
-	;CallInstDLL "${NSUTILS}" ExecutePendingFileRenameOperations
+!ifdef DEBUGGING_ENABLED
+	Push "$EXEDIR\PendingFileRename.log"
+	Push "MyNotepad"
+	CallInstDLL "${NSUTILS}" ExecutePendingFileRenameOperations
+!else
 	NSutils::ExecutePendingFileRenameOperations /NOUNLOAD "MyNotepad" "$EXEDIR\PendingFileRename.log"
-	Pop $0
-	Pop $1
+!endif
+	Pop $0	; Win32 error code
+	Pop $1	; Win32 error code of the first failed operation
 
 	${If} ${FileExists} "$DESKTOP\MyNotepad2.exe"
 		${Print} "[SUCCESS] ExecutePendingFileRenameOperations ($$0 = $0, $$1 = $1)"
@@ -229,14 +233,23 @@ Section /o "Test FindFileRenameOperations"
 	${Print} "--------------------------------------------------------------"
 
 	StrCpy $R0 "temp"	; Substring to find
-	;Push $R0
-	;CallInstDLL "${NSUTILS}" FindPendingFileRenameOperations
+!ifdef DEBUGGING_ENABLED
+	Push $R0
+	CallInstDLL "${NSUTILS}" FindPendingFileRenameOperations
+!else
 	NSutils::FindPendingFileRenameOperations /NOUNLOAD $R0
+!endif
 	Pop $0
 	${Print} 'FindPendingFileRenameOperations( "$R0" ) == "$0"'
 
-	StrCpy $R0 "*"	; Substring to find
+
+	StrCpy $R0 "*"		; Substring to find
+!ifdef DEBUGGING_ENABLED
+	Push $R0
+	CallInstDLL "${NSUTILS}" FindPendingFileRenameOperations
+!else
 	NSutils::FindPendingFileRenameOperations /NOUNLOAD $R0
+!endif
 	Pop $0
 	${Print} 'FindPendingFileRenameOperations( "$R0" ) == "$0"'
 
@@ -297,24 +310,77 @@ Section /o "Test string table manipulation"
 SectionEnd
 
 
-Section /o "Test close file handles"
+Section "Test close file handles"
 
 	${Print} "--------------------------------------------------------------"
 	${DisableX64FSRedirection}
 
-	${Print} 'Close "hosts" file handles'
-	;Push "$SYSDIR\drivers\etc\hosts"
-	;CallInstDLL "${NSUTILS}" CloseFileHandles
-	NSutils::CloseFileHandles /NOUNLOAD "$SYSDIR\drivers\etc\hosts"
-	Pop $0
-	${Print} '  $0 closed'
+	!define CREATE_NEW				1
+	!define CREATE_ALWAYS			2
+	!define OPEN_EXISTING			3
+	!define OPEN_ALWAYS				4
 
-	${Print} 'Close "$DESKTOP\test.txt" file handles'
-	;Push "$DESKTOP\test.txt"
-	;CallInstDLL "${NSUTILS}" CloseFileHandles
-	NSutils::CloseFileHandles /NOUNLOAD "$DESKTOP\test.txt"
+	!define INVALID_HANDLE_VALUE	-1
+
+	;!define TESTFILE "$TEMP\test_close_handles.txt"
+	!define TESTFILE "$SYSDIR\drivers\etc\hosts"
+	${Print} "TESTFILE = ${TESTFILE}"
+
+	; Open test file (handle1)
+	System::Call 'kernel32::CreateFile( t "${TESTFILE}", i ${GENERIC_READ}, i ${FILE_SHARE_READ}, p 0, i ${OPEN_ALWAYS}, i ${FILE_ATTRIBUTE_NORMAL}, p 0 ) i.r10 ? e'
+	Pop $0	; GetLastError
+	${If} $R0 p<> ${INVALID_HANDLE_VALUE}
+		StrCpy $0 0
+	${EndIf}
+	${Print} 'CreateFile( #1, TESTFILE ) = $0'
+
+	; Open test file (handle2)
+	System::Call 'kernel32::CreateFile( t "${TESTFILE}", i ${GENERIC_READ}, i ${FILE_SHARE_READ}, p 0, i ${OPEN_ALWAYS}, i ${FILE_ATTRIBUTE_NORMAL}, p 0 ) i.r11 ? e'
+	Pop $0	; GetLastError
+	${If} $R1 p<> ${INVALID_HANDLE_VALUE}
+		StrCpy $0 0
+	${EndIf}
+	${Print} 'CreateFile( #2, TESTFILE ) = $0'
+
+	; ----------------------------------
+
+	${Print} 'Close TESTFILE file handles'
+!ifdef DEBUGGING_ENABLED
+	Push "${TESTFILE}"
+	CallInstDLL "${NSUTILS}" CloseFileHandles
+!else
+	NSutils::CloseFileHandles /NOUNLOAD "${TESTFILE}"
+!endif
 	Pop $0
-	${Print} '  $0 closed'
+	${Print} '  $0 handles closed'
+
+	; ----------------------------------
+
+	; Close test file (handle1)
+	System::Call 'kernel32::CloseHandle( p r10 ) i.r1 ? e'
+	Pop $0	; GetLastError
+	${If} $1 <> ${FALSE}
+		StrCpy $0 0
+	${EndIf}
+	${If} $0 = 6
+		${Print} 'CloseHandle( #1, TESTFILE ) = $0 [CORRECT]'
+	${Else}
+		${Print} 'CloseHandle( #1, TESTFILE ) = $0 [INCORRECT]'
+	${EndIf}
+
+	; Close test file (handle2)
+	System::Call 'kernel32::CloseHandle( p r11 ) i.r1 ? e'
+	Pop $0	; GetLastError
+	${If} $1 <> ${FALSE}
+		StrCpy $0 0
+	${EndIf}
+	${If} $0 = 6
+		${Print} 'CloseHandle( #2, TESTFILE ) = $0 [CORRECT]'
+	${Else}
+		${Print} 'CloseHandle( #2, TESTFILE ) = $0 [INCORRECT]'
+	${EndIf}
+
+	;Delete "${TESTFILE}"
 
 	${EnableX64FSRedirection}
 

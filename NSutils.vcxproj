@@ -307,6 +307,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="gdi.c" />
+    <ClCompile Include="handles.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="registry.c" />
     <ClCompile Include="strblock.c" />

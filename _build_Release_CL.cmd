@@ -89,6 +89,7 @@ set FILES=^
 	"utils.c" ^
 	"strblock.c" ^
 	"gdi.c" ^
+	"handles.c" ^
 	"nsiswapi\pluginapi.c"
 
 goto :EOF
