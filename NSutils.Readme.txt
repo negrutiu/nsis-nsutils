@@ -322,7 +322,7 @@ Close all opened handles to the specified file or folder.
 Be mindful of the file system redirection on 64-bit platforms!
 
 Syntax:
-	NSutils::ExecutePendingFileRenameOperations [/NOUNLOAD] "File"
+	NSutils::CloseFileHandles [/NOUNLOAD] "File"
 
 Return values:
 	The number of closed handles
