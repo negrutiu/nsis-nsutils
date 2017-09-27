@@ -212,6 +212,17 @@ INT_PTR MyUnsubclassWindow(
 }
 
 
+//++ memset
+#pragma function (memset)
+void* __cdecl memset( void *dest, int c, size_t count )
+{
+	LPBYTE p;
+	for (p = (LPBYTE)(dest)+(count)-1; p >= (LPBYTE)(dest); p--)
+		*p = c;
+	return dest;
+}
+
+
 /***
 *memmove - Copy source buffer to destination buffer
 *
@@ -1587,6 +1598,134 @@ void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
 
 		wsprintf( pszBuf, _T("%hu"), err );
 		pushstring( pszBuf );
+
+		/// Free memory
+		GlobalFree( pszBuf );
+	}
+}
+
+
+//++ IsSSD
+BOOL IsSSD( _In_ LPCTSTR pszPath )
+{
+	DWORD err = ERROR_SUCCESS;
+	BOOL bTrim = FALSE;
+
+	if (pszPath && (lstrlen( pszPath ) > 1) && (pszPath[1] == _T( ':' ))) {
+
+		TCHAR szDisk[20];
+		HANDLE hDisk;
+
+		wsprintf( szDisk, _T( "\\\\.\\%C:" ), pszPath[0] );
+		hDisk = CreateFile( szDisk, FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL );
+		if (hDisk != INVALID_HANDLE_VALUE) {
+
+			DWORD iBytes;
+
+			// Test whether the drive supports TRIM
+			// Some older SSDs might be missed, but it's acceptable for now
+			// (Marius)
+			{
+#if defined (__MINGW32__)
+				typedef struct _DEVICE_TRIM_DESCRIPTOR {
+					ULONG Version;
+					ULONG Size;
+					BOOLEAN TrimEnabled;
+				} DEVICE_TRIM_DESCRIPTOR, *PDEVICE_TRIM_DESCRIPTOR;
+#endif
+				STORAGE_PROPERTY_QUERY spq;
+				DEVICE_TRIM_DESCRIPTOR dtr;
+
+				ZeroMemory( &spq, sizeof( spq ) );
+				ZeroMemory( &dtr, sizeof( dtr ) );
+				spq.PropertyId = StorageDeviceTrimProperty;
+				spq.QueryType = PropertyStandardQuery;
+
+				if (DeviceIoControl( hDisk, IOCTL_STORAGE_QUERY_PROPERTY, &spq, sizeof( spq ), &dtr, sizeof( dtr ), &iBytes, NULL )) {
+					bTrim = dtr.TrimEnabled;
+				} else {
+					err = GetLastError();
+				}
+			}
+
+			///{
+			///	//? https://msdn.microsoft.com/en-us/library/windows/hardware/ff560517(v=vs.85).aspx
+			///	//! The disk handle must be opened with GENERIC_READ|GENERIC_WRITE
+			///	struct {
+			///		SRB_IO_CONTROL ctl;
+			///		NVCACHE_REQUEST_BLOCK nrb;
+			///		NV_FEATURE_PARAMETER nfp;
+			///	} req = {0};
+			///	
+			///	req.ctl.HeaderLength = sizeof( req.ctl );
+			///	CopyMemory( req.ctl.Signature, IOCTL_MINIPORT_SIGNATURE_HYBRDISK, 8 );
+			///	///req.ctl.Timeout = 5000;
+			///	req.ctl.ControlCode = IOCTL_SCSI_MINIPORT_NVCACHE;
+			///	req.ctl.Length = sizeof( req.nrb ) + sizeof( req.nfp );
+			///
+			///	req.nrb.NRBSize = sizeof( req.nrb );
+			///	req.nrb.Function = NRB_FUNCTION_NVCACHE_INFO;
+			///	req.nrb.DataBufSize = sizeof( req.nfp );
+			///
+			///	if (DeviceIoControl( hDisk, IOCTL_SCSI_MINIPORT, &req, sizeof( req ), NULL, 0, &iBytes, NULL )) {
+			///		iBytes = iBytes;
+			///	} else {
+			///		err = GetLastError();
+			///	}
+			///}
+
+			CloseHandle( hDisk );
+
+		} else {
+			err = GetLastError();		/// CreateFile
+		}
+	} else {
+		err = ERROR_INVALID_PARAMETER;
+	}
+
+	return (err == ERROR_SUCCESS) && bTrim;
+}
+
+
+//++ [exported] DriveIsSSD
+//  ----------------------------------------------------------------------
+//+ Input:
+//    [Stack] File|Dir
+//+ Output:
+//    [Stack] TRUE/FALSE
+//+ Example:
+//    NSutils::DriveIsSSD "$INSTDIR"
+//    Pop $0 ; TRUE/FALSE
+
+void __declspec(dllexport) DriveIsSSD(
+	HWND parent,
+	int string_size,
+	TCHAR *variables,
+	stack_t **stacktop,
+	extra_parameters *extra
+	)
+{
+	LPTSTR pszBuf = NULL;
+
+	//	Cache global structures
+	EXDLL_INIT();
+	EXDLL_VALIDATE();
+
+	//	Retrieve NSIS parameters
+	/// Allocate memory large enough to store any NSIS string
+	pszBuf = (TCHAR*)GlobalAlloc( GPTR, sizeof( TCHAR ) * string_size );
+	if (pszBuf) {
+
+		BOOL bSSD = FALSE;
+
+		///	Param1: File|Dir
+		if (popstring( pszBuf ) == 0) {
+
+			/// Execute
+			bSSD = IsSSD( pszBuf );
+		}
+
+		pushint( bSSD );
 
 		/// Free memory
 		GlobalFree( pszBuf );

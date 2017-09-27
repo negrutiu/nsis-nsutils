@@ -468,3 +468,23 @@ Example:
 		; Success
 	${EndIf}
 _______________________________________________________________________________
+
+[DriveIsSSD]
+Check if the specified drive is SSD, by examining its TRIM capability
+
+Syntax:
+	NSutils::DriveIsSSD [/NOUNLOAD] "FileOrDirectory"
+
+Input:
+	[Stack] File|Dir
+
+Output:
+	[Stack] TRUE/FALSE
+
+Example:
+	NSutils::DriveIsSSD "$INSTDIR"
+	Pop $0
+	${If} $0 <> ${FALSE}
+		; Drive is SSD
+	${EndIf}
+_______________________________________________________________________________

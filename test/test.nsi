@@ -619,6 +619,28 @@ Section /o "Test compare files"
 SectionEnd
 
 
+Section /o "Test SSD"
+	${Print} "--------------------------------------------------------------"
+	${Print} "Test SSD"
+
+	StrCpy $9 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	${For} $R0 0 25
+		StrCpy $R1 $9 1 $R0
+
+!ifdef DEBUGGING_ENABLED
+		Push "$R1:"
+		CallInstDLL "${NSUTILS}" DriveIsSSD
+!else
+		NSutils::DriveIsSSD /NOUNLOAD "$R1:"
+!endif
+		Pop $0
+		${Print} "  DriveIsSSD ( $R1: ) == (BOOL)$0"
+
+	${Next}
+
+SectionEnd
+
+
 !macro CPUID_PRINT_FEATURE _Feature _Reg _Mask
 	IntOp $0 ${_Reg} & ${_Mask}
 	${If} $0 <> 0
