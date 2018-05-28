@@ -1,7 +1,7 @@
 _______________________________________________________________________________
 
 Functions exported by NSutils
-[marius.negrutiu@gmail.com]
+[marius.negrutiu@protonmail.com]
 _______________________________________________________________________________
 
 [GetVersionInfoString]
