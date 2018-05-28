@@ -19,16 +19,30 @@
 extern HINSTANCE g_hModule;				/// Defined in main.c
 HHOOK g_hMessageLoopHook = NULL;
 
+// Timer cache
+typedef struct _TMPAIR { int NsisCallback; UINT_PTR TimerID; } TMPAIR;
+TMPAIR g_Timers[25] = {0};
+
 
 //++ UtilsUnload
 /// Called when the plugin unloads
 VOID UtilsUnload()
 {
+	int i;
 	// If still hooked, unhook the message loop
 	if ( g_hMessageLoopHook ) {
 		UnhookWindowsHookEx( g_hMessageLoopHook );
 		g_hMessageLoopHook = NULL;
 		///OutputDebugString( _T("[NSutils::MessageLoopRejectCloseWndProc] auto false\n"));
+	}
+	// Kill existing timers
+	for (i = 0; i < ARRAYSIZE( g_Timers ); i++) {
+		if (g_Timers[i].TimerID != 0) {
+			ULONG err = KillTimer( NULL, g_Timers[i].TimerID ) ? ERROR_SUCCESS : GetLastError();
+			DebugString( _T( "[NSutils::%hs] KillTimer( NSIS:%d, ID:%u, Idx:%d/%d ) == 0x%x\n" ), __FUNCTION__, g_Timers[i].NsisCallback, g_Timers[i].TimerID, i, ARRAYSIZE(g_Timers), err );
+			g_Timers[i].TimerID = 0;
+			g_Timers[i].NsisCallback = 0;
+		}
 	}
 }
 
@@ -150,7 +164,7 @@ BOOLEAN EnableWow64FsRedirection( __in BOOLEAN bEnable )
 #define PROP_PROGRESSBAR_NOSTEPBACK		_T("NSutils.ProgressBar.NoStepBack")
 #define PROP_PROGRESSBAR_REDIRECTWND	_T("NSutils.ProgressBar.RedirectWnd")
 #define PROP_BNCLICKED_CALLBACK			_T("NSutils.BN_CLICKED.Callback")
-#define PROP_WMTIMER_CALLBACK			_T("NSutils.WM_TIMER.Callback.%d")
+
 
 //++ MySubclassWindow
 INT_PTR MySubclassWindow(
@@ -748,23 +762,6 @@ LRESULT CALLBACK MainWndProc(
 
 	switch ( iMsg )
 	{
-	case WM_TIMER:
-		{
-			// We use the NSIS callback also as a timer ID
-			// In order to avoid collisions with other (legitimate) WM_TIMER ticks, we have to make sure that this timer ID is actually one of our callbacks
-			int iNsisCallback = (int)wParam;
-
-			TCHAR szPropName[128];
-			wsprintf( szPropName, PROP_WMTIMER_CALLBACK, iNsisCallback );
-			if ( GetProp( hWnd, szPropName )) {
-
-				// Call the NSIS callback
-				g_ep->ExecuteCodeSegment( iNsisCallback - 1, 0 );
-			}
-
-			break;
-		}
-
 	case WM_COMMAND:
 		{
 			if ( HIWORD( wParam ) == BN_CLICKED ) {
@@ -793,6 +790,27 @@ LRESULT CALLBACK MainWndProc(
 		return CallWindowProc( fnOriginalWndProc, hWnd, iMsg, wParam, lParam );
 	} else {
 		return DefWindowProc( hWnd, iMsg, wParam, lParam );
+	}
+}
+
+
+//++ TimerWndProc
+VOID CALLBACK TimerWndProc( _In_ HWND hWnd, _In_ UINT iMsg, _In_ UINT_PTR iEventID, _In_ DWORD iTime )
+{
+	if (iMsg == WM_TIMER) {
+
+		// Check timer cache
+		int i;
+		for (i = 0; i < ARRAYSIZE( g_Timers ); i++) {
+			if (g_Timers[i].TimerID == iEventID) {
+				// NSIS callback
+				DebugString( _T( "[NSutils::%hs] OnTimer( NSIS:%d, ID:%u, Idx:%d/%d )\n" ), __FUNCTION__, g_Timers[i].NsisCallback, (ULONG)g_Timers[i].TimerID, i, ARRAYSIZE(g_Timers) );
+				g_ep->ExecuteCodeSegment( g_Timers[i].NsisCallback - 1, 0 );
+				break;
+			}
+		}
+		if (i == ARRAYSIZE(g_Timers))
+			DebugString( _T( "[NSutils::%hs] WM_TIMER( ID:%u, Time:%ums ) not found in cache\n" ), __FUNCTION__, (ULONG)iEventID, iTime );
 	}
 }
 
@@ -832,18 +850,33 @@ void __declspec(dllexport) StartTimer(
 	iPeriod = popint();
 
 	// SetTimer
-	if (( iCallback != 0 ) && ( iPeriod > 0 ) && parent && IsWindow( parent )) {
+	if (( iCallback != 0 ) && ( iPeriod > 0 )) {
 
-		if ( MySubclassWindow( parent, MainWndProc ) > 0 ) {
+		int i, idx;
 
-			/// Remember the NSIS callback for later. Needed for validations
-			TCHAR szPropName[128];
-			wsprintf( szPropName, PROP_WMTIMER_CALLBACK, iCallback );
-			SetProp( parent, szPropName, (HANDLE)TRUE );
+		// Check timer cache
+		for (i = 0, idx = -1; i < ARRAYSIZE( g_Timers ); i++) {
 
-			/// Start the timer
-			/// Use the NSIS callback as timer ID
-			SetTimer( parent, iCallback, iPeriod, NULL );
+			/// Remember the first vacant cache index
+			if (idx == -1 && g_Timers[i].TimerID == 0)
+				idx = i;
+
+			if (g_Timers[i].NsisCallback == iCallback) {
+				/// Rearm the timer
+				g_Timers[i].TimerID = SetTimer( NULL, g_Timers[i].TimerID, iPeriod, TimerWndProc );
+				DebugString( _T( "[NSutils::%hs] RearmTimer( NSIS:%d, ID:%u, Idx:%d/%d )\n" ), __FUNCTION__, g_Timers[i].NsisCallback, (ULONG)g_Timers[i].TimerID, i, ARRAYSIZE(g_Timers) );
+				break;
+			}
+		}
+		if (i == ARRAYSIZE( g_Timers )) {
+			/// New timer
+			if (idx >= 0) {
+				g_Timers[idx].TimerID = SetTimer( NULL, (g_Timers[idx].NsisCallback = iCallback), iPeriod, TimerWndProc );
+				DebugString( _T( "[NSutils::%hs] SetTimer( NSIS:%d, ID:%u, Idx:%d/%d )\n" ), __FUNCTION__, g_Timers[idx].NsisCallback, (ULONG)g_Timers[idx].TimerID, idx, ARRAYSIZE(g_Timers) );
+			} else {
+				/// Cache full
+				DebugString( _T( "[NSutils::%hs] Timer cache is full (Capacity:%d)\n" ), __FUNCTION__, ARRAYSIZE(g_Timers) );
+			}
 		}
 	}
 }
@@ -867,7 +900,8 @@ void __declspec(dllexport) StopTimer(
 	extra_parameters *extra
 	)
 {
-	int iCallback;
+	ULONG err;
+	int i, iNsisCallback;
 
 	//	Cache global structures
 	EXDLL_INIT();
@@ -876,20 +910,21 @@ void __declspec(dllexport) StopTimer(
 	//	Retrieve NSIS parameters
 
 	///	Param1: Callback function
-	iCallback = popint();
+	iNsisCallback = popint();
 
-	// Kill the timer
-	if (( iCallback != 0 ) && parent && IsWindow( parent )) {
-
-		KillTimer( parent, iCallback );
-		MyUnsubclassWindow( parent );
-
-		/// Forget this NSIS callback
-		if ( TRUE ) {
-			TCHAR szPropName[128];
-			wsprintf( szPropName, PROP_WMTIMER_CALLBACK, iCallback );
-			RemoveProp( parent, szPropName );
+	// Check timer cache
+	if (iNsisCallback != 0) {
+		for (i = 0; i < ARRAYSIZE( g_Timers ); i++) {
+			if (g_Timers[i].NsisCallback == iNsisCallback) {
+				err = KillTimer( NULL, g_Timers[i].TimerID ) ? ERROR_SUCCESS : GetLastError();
+				DebugString( _T( "[NSutils::%hs] KillTimer( NSIS:%d, ID:%u, Idx:%d/%d ) == 0x%x\n" ), __FUNCTION__, g_Timers[i].NsisCallback, (ULONG)g_Timers[i].TimerID, i, ARRAYSIZE(g_Timers), err );
+				g_Timers[i].TimerID = 0;
+				g_Timers[i].NsisCallback = 0;
+				break;
+			}
 		}
+		if (i == ARRAYSIZE( g_Timers ))
+			DebugString( _T( "[NSutils::%hs] NSIS callback %d not found in cache\n" ), __FUNCTION__, iNsisCallback );
 	}
 }
 
