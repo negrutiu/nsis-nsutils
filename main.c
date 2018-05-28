@@ -24,3 +24,23 @@ BOOL WINAPI DllMain(
 	}
 	return TRUE;
 }
+
+//+ DebugString
+#if _DEBUG || DBG
+VOID DebugString( _In_ LPCTSTR pszFormat, _In_opt_ ... )
+{
+	if (pszFormat && *pszFormat) {
+
+		TCHAR szStr[1024];		/// Enough? Dynamic?
+
+		va_list args;
+		va_start( args, pszFormat );
+
+		wvsprintf( szStr, pszFormat, args );
+
+		va_end( args );
+
+		OutputDebugString( szStr );
+	}
+}
+#endif
