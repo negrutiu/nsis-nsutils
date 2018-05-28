@@ -241,7 +241,9 @@ void* __cdecl memset( void *dest, int c, size_t count )
 *
 *Exceptions:
 *******************************************************************************/
-
+#if (_MSC_VER > 1900)		/// Visual Studio 2017+
+#pragma function (memmove)
+#endif
 void * __cdecl memmove (
         void * dst,
         const void * src,
