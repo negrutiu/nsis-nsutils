@@ -488,7 +488,7 @@ void RegMultiSzInsertBefore(
 //+ Output:
 //    [Stack] Win32 error
 //+ Example:
-//    NSutils::RegMultiSzInsertBefore [/NOUNLOAD] "HKLM\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} "Line 4" "Line 5"
+//    NSutils::RegMultiSzInsertBefore [/NOUNLOAD] "HKLM\Software\MyCompany" "MyValue" ${KEY_WOW64_64KEY} "Line 4" 3
 //    Pop $0	; Win32 error
 
 __declspec(dllexport)
