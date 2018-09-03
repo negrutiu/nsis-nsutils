@@ -5,14 +5,14 @@ Functions exported by NSutils
 _______________________________________________________________________________
 
 [GetVersionInfoString]
-Extract a specific string off of an executable's version information block.
+Extract specific strings from an executable's version information block.
 Be mindful of the file system redirection on 64-bit platforms!
 
 Syntax:
 	NSutils::GetVersionInfoString [/NOUNLOAD] ExeName VersionInfoString
 
 Return value:
-	The requested string will be returned on the stack, or an empty string in case of errors...
+	The requested string will be returned on the stack
 
 Example:
 	${DisableX64FSRedirection}	; Optional. On 64-bit platforms, read from System32 rather than SysWOW64
@@ -22,13 +22,13 @@ Example:
 		; Valid string
 		MessageBox MB_ICONINFORMATION 'LegalCopyright = "$0"'
 	${Else}
-		; Some error. Probably the string hasn't been found
+		; Some error. Probably the string is missing
 	${EndIf}
 	${EnableX64FSRedirection}
 _______________________________________________________________________________
 
 [GetFileVersion]
-Extract the numeric file version off of an executable's version information block.
+Extract the numeric file version from an executable's version information block.
 Be mindful of the file system redirection on 64-bit platforms!
 
 Syntax:
@@ -37,7 +37,7 @@ Syntax:
 Return values:
 	If the operation is successful, the function will return a pre-formatted
 	"v1.v2.v3.v4" version string on the stack. In addition, $1, $2, $3 and $4
-	will store each version component.
+	will store each individual version component.
 	If the operation is unsuccessful, an empty string will be returned on the
 	stack, and $1..$4 will not be set.
 
@@ -55,7 +55,7 @@ Example:
 _______________________________________________________________________________
 
 [GetProductVersion]
-Extract the numeric product version off of an executable's version information block.
+Extract the numeric product version from an executable's version information block.
 Be mindful of the file system redirection on 64-bit platforms!
 
 Syntax:
@@ -64,7 +64,7 @@ Syntax:
 Return values:
 	If the operation is successful, the function will return a pre-formatted
 	"v1.v2.v3.v4" version string on the stack. In addition, $1, $2, $3 and $4
-	will store each version component.
+	will store each individual version component.
 	If the operation is unsuccessful, an empty string will be returned on the
 	stack, and $1..$4 will not be set.
 
@@ -133,9 +133,9 @@ _______________________________________________________________________________
 
 [ExecutePendingFileRenameOperations]
 The routine examines the "PendingFileRenameOperations" registry value
-and executes pending operations that match a substring.
-Operations will be removed from the registry value, therefore they won't
-be executed during the next reboot...
+and executes all pending operations that match a specified substring.
+Operations will be removed from the registry value, and won't
+be executed again at the next reboot...
 Operations will be logged to LogFile.
 
 Syntax:
@@ -162,7 +162,7 @@ _______________________________________________________________________________
 
 [FindPendingFileRenameOperations]
 The routine searches the "PendingFileRenameOperations" registry value for
-pending operations that match a substring.
+pending operations that match a specified substring.
 
 Syntax:
 	NSutils::FindPendingFileRenameOperations [/NOUNLOAD] "FileSubstring"
@@ -182,9 +182,10 @@ _______________________________________________________________________________
 
 [DisableProgressStepBack]
 [RestoreProgressStepBack]
-Don't allow a progress bar control to step back.
-It happens when you have loops in the script.
+Don't allow the progress bar control to step back.
+This is a common problem if your script has loops.
 NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
+It only works when called from a Section (while the InstFiles page is active)
 
 Syntax:
 	NSutils::DisableProgressStepBack /NOUNLOAD ProgressBarHandle
@@ -226,6 +227,10 @@ Start a timer. A callback is fired each time the clock ticks.
 The callback is a regular NSIS function, no input, no output.
 NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
 
+Warning:
+	The timer can hit while another piece of the script is running
+	Your Timer callback function should save the status and restore it before exiting
+
 Syntax:
 	NSutils::StartTimer /NOUNLOAD NsisCallbackFunction TimerPeriodMS
 	NSutils::StopTimer [/NOUNLOAD] NsisCallbackFunction
@@ -250,7 +255,7 @@ _______________________________________________________________________________
 [StopReceivingClicks]
 
 Subclass a (parent) window in order to intercept BN_CLICKED commands.
-A NSIS callback is fired whenever a child button is clicked.
+A NSIS callback function is fired whenever a child button is clicked.
 The callback function is a regular NSIS function. It receives button's HWND and ID on the stack. No return value.
 
 NSutils must remain loaded between calls, therefore /NOUNLOAD is mandatory!
@@ -277,7 +282,7 @@ _______________________________________________________________________________
 
 [LoadImageFile]
 Load an image in memory (HBITMAP) using oleaut32!OleLoadPicturePath.
-The source can be either a local file, or an URL
+The source can be either a local file or a remote URL
 Supported formats: BMP, JPEG, GIF
 
 You have to specify the HBITMAP dimensions. The original image will be fitted
@@ -297,13 +302,13 @@ Example:
 	NSutils::LoadImageFile "http://www.codeproject.com/App_Themes/CodeProject/Img/logo250x135.gif" 640 480 center center
 	Pop $0	; HBITMAP
 	...
-	System::Call 'user32::DeleteObject( i $0 )'
+	System::Call 'user32::DeleteObject( p $0 )'
 
 _______________________________________________________________________________
 
 [RejectCloseMessages]
 Reject closing window messages such as WM_CLOSE, WM_DESTROY, WM_COMMAND(IDCANCEL), WM_SYSCOMMAND(SC_CLOSE), etc
-All such messages will be blocked regardless of which window they've been sent to.
+Such messages will be rejected when sent to your Installer
 
 Syntax:
 	NSutils::RejectCloseMessages /NOUNLOAD true|false
@@ -470,7 +475,7 @@ Example:
 _______________________________________________________________________________
 
 [DriveIsSSD]
-Check if the specified drive is SSD, by examining its TRIM capability
+Check if the specified drive is SSD by examining its TRIM capability
 
 Syntax:
 	NSutils::DriveIsSSD [/NOUNLOAD] "FileOrDirectory"
