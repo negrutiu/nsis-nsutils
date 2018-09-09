@@ -70,7 +70,7 @@ BEGIN
             VALUE "FileDescription", "NSIS utility routines"
             VALUE "FileVersion", "1.2018.5.28"
             VALUE "InternalName", "NSutils.dll"
-            VALUE "LegalCopyright", "(C)2015-2018, Marius Negrutiu. All rights reserved"
+            VALUE "LegalCopyright", "(C)2015-2018, Marius Negrutiu. All rights reserved."
             VALUE "OriginalFilename", "NSutils.dll"
             VALUE "ProductName", "NSIS utility routines"
             VALUE "ProductVersion", "1.0.0.0"
