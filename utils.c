@@ -228,17 +228,6 @@ INT_PTR MyUnsubclassWindow(
 }
 
 
-//++ memset
-#pragma function (memset)
-void* __cdecl memset( void *dest, int c, size_t count )
-{
-	LPBYTE p;
-	for (p = (LPBYTE)(dest)+(count)-1; p >= (LPBYTE)(dest); p--)
-		*p = c;
-	return dest;
-}
-
-
 /***
 *memmove - Copy source buffer to destination buffer
 *
