@@ -1,7 +1,5 @@
 
-/*
-	Marius Negrutiu (2016/06/05)
-*/
+//? Marius Negrutiu (marius.negrutiu@protonmail.com) :: 2016/06/05
 
 #include "main.h"
 

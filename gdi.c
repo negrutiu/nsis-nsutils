@@ -1,4 +1,6 @@
 
+//? Marius Negrutiu (marius.negrutiu@protonmail.com) :: 2013/07/06
+
 #include "main.h"
 
 #define COBJMACROS

@@ -1,4 +1,6 @@
 
+//? Marius Negrutiu (marius.negrutiu@protonmail.com) :: 2013/06/07
+
 #include "main.h"
 
 // Global variables

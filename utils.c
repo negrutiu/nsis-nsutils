@@ -1,4 +1,6 @@
 
+//? Marius Negrutiu (marius.negrutiu@protonmail.com) :: 2013/06/11
+
 #include "main.h"
 #include <CommCtrl.h>
 #include <Shlwapi.h>

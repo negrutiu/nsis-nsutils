@@ -1,3 +1,6 @@
+
+//? Marius Negrutiu (marius.negrutiu@protonmail.com) :: 2013/06/07
+
 #pragma once
 #ifndef _PLATFORM_H_
 #define _PLATFORM_H_
