@@ -642,7 +642,6 @@ BOOL UpdateBlock( HANDLE hUpdate, PSTRINGBLOCK pStrBlock, int nBlockID, WORD wLa
 {
 	DWORD	dwResSize;
 	LPVOID	pRes;
-	DWORD	dwRet = 0;
 	WORD	wLanguageID = (0 == wLangID) ? pStrBlock->wLangID : wLangID;
 
 	// Get the resource length as required by a raw string resource block.

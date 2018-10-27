@@ -44,6 +44,7 @@ VOID UtilsUnload()
 			DebugString( _T( "[NSutils::%hs] KillTimer( NSIS:%d, ID:%u, Idx:%d/%d ) == 0x%x\n" ), __FUNCTION__, g_Timers[i].NsisCallback, g_Timers[i].TimerID, i, ARRAYSIZE(g_Timers), err );
 			g_Timers[i].TimerID = 0;
 			g_Timers[i].NsisCallback = 0;
+			UNREFERENCED_PARAMETER( err );
 		}
 	}
 }
@@ -1094,6 +1095,7 @@ void __declspec(dllexport) StopTimer(
 		if (i == ARRAYSIZE( g_Timers ))
 			DebugString( _T( "[NSutils::%hs] NSIS callback %d not found in cache\n" ), __FUNCTION__, iNsisCallback );
 	}
+	UNREFERENCED_PARAMETER( err );
 }
 
 
@@ -1301,6 +1303,7 @@ void __declspec(dllexport) RejectCloseMessages(
 
 		/// Free memory
 		GlobalFree( pszBuf );
+		UNREFERENCED_PARAMETER( err );
 	}
 }
 
@@ -1333,8 +1336,8 @@ void __declspec(dllexport) CPUID(
 	extra_parameters *extra
 	)
 {
-	UINT iFnId;
-	UINT regs[4];	/// {EAX, EBX, ECX, EDX}
+	INT iFnId;
+	INT regs[4];	/// {EAX, EBX, ECX, EDX}
 
 	// Cache global structures
 	EXDLL_INIT();
@@ -1654,13 +1657,6 @@ BOOL IsSSD( _In_ LPCTSTR pszPath )
 			// Some older SSDs might be missed, but it's acceptable for now
 			// (Marius)
 			{
-#if defined (__MINGW32__)
-				typedef struct _DEVICE_TRIM_DESCRIPTOR {
-					ULONG Version;
-					ULONG Size;
-					BOOLEAN TrimEnabled;
-				} DEVICE_TRIM_DESCRIPTOR, *PDEVICE_TRIM_DESCRIPTOR;
-#endif
 				STORAGE_PROPERTY_QUERY spq;
 				DEVICE_TRIM_DESCRIPTOR dtr;
 

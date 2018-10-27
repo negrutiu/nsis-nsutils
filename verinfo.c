@@ -5,11 +5,7 @@
 
 
 //++ FindFirstStringFileInfo
-BOOL FindFirstStringFileInfo(
-	__inout WORD **pp,
-	__in LPWSTR pszParentKeyW,
-	__out LPWSTR *ppszChildKeyW
-	)
+BOOL FindFirstStringFileInfo( __inout WORD **pp, __in LPWSTR pszParentKeyW, __out LPWSTR *ppszChildKeyW )
 {
 	LPWORD P = (LPWORD)*pp;		/// WORD pointer
 	LPBYTE p = (LPBYTE)P;		/// BYTE pointer
@@ -18,7 +14,6 @@ BOOL FindFirstStringFileInfo(
 
 	WORD iLength, iValueLength, iType;
 	LPWSTR pszKeyW;
-	LPBYTE pValueBin;
 	BOOL bHasChildren;
 
 	iLength = *P++;
@@ -28,15 +23,17 @@ BOOL FindFirstStringFileInfo(
 		iType = *P++;		/// 0 == binary, 1 == text
 
 		pszKeyW = (LPWSTR)P;
-		for ( ; *P != UNICODE_NULL; P++ ); P++;
+		for ( ; *P != UNICODE_NULL; P++ );
+		P++;
 
 		p += ((LPBYTE)P - (LPBYTE)pBlock) % 4;		/// DWORD padding
 
 		if ( iValueLength > 0 ) {
 
-			pValueBin = (LPBYTE)P;
 			if ( iType == 1 ) {
-				for ( ; *P != UNICODE_NULL; P++ ); P++;		/// Note: iValueLength is not quite reliable. In some executables (most of them) iValueLength means WCHAR-s, while in others (ResHacker.exe) it means bytes.
+				/// Note: iValueLength is not reliable. In most executables iValueLength means WCHAR-s, while in others (ResHacker.exe) it means bytes
+				for ( ; *P != UNICODE_NULL; P++ );
+				P++;
 			} else {
 				p += iValueLength;
 			}

@@ -390,7 +390,6 @@ void __declspec(dllexport) LoadImageFile(
 
 		TCHAR szPath[MAX_PATH];
 		int w, h;
-		BOOLEAN bSuccess = FALSE;
 		int iAlignH = ALIGN_CENTER, iAlignV = ALIGN_CENTER;
 
 		///	Param1: Image file path or URL

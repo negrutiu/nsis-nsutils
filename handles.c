@@ -384,6 +384,7 @@ void __declspec(dllexport) CloseFileHandles(
 
 		/// Free memory
 		GlobalFree( pszBuf );
+		UNREFERENCED_PARAMETER( err );
 	}
 
 	/// Return value
