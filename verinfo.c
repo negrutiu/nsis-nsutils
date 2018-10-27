@@ -4,6 +4,28 @@
 #include "main.h"
 
 
+// Forward declarations
+DWORD ExtractVersionInfo( __in LPCTSTR szFile, __out BYTE **ppBuf, __out ULONG *piBufSize );		/// Caller must HeapFree(*ppBuf)
+
+//++ MyMemset
+void* __cdecl MyMemset( void *dest, int c, size_t count )
+{
+	LPBYTE p;
+	for (p = (LPBYTE)(dest)+(count)-1; p >= (LPBYTE)(dest); p--)
+		*p = c;
+	return dest;
+}
+
+//++ MyMemcpy
+void* __cdecl MyMemcpy( void *dest, const void *src, size_t count )
+{
+	LPBYTE p, q;
+	for (p = (LPBYTE)src + count - 1, q = (LPBYTE)dest + count - 1; p >= (LPBYTE)src; p--, q--)
+		*q = *p;
+	return dest;
+}
+
+
 //++ FindFirstStringFileInfo
 BOOL FindFirstStringFileInfo( __inout WORD **pp, __in LPWSTR pszParentKeyW, __out LPWSTR *ppszChildKeyW )
 {
@@ -76,93 +98,68 @@ DWORD ReadVersionInfoString(
 {
 	DWORD err = ERROR_SUCCESS;
 
-	// Validate parameters
+	if (szStringValue)
+		szStringValue[0] = 0;
+
 	if ( szFile && *szFile && szStringName && *szStringName && szStringValue && ( iStringValueLen > 0 )) {
 
-		DWORD dwVerInfoSize;
-		*szStringValue = _T('\0');
+		LPBYTE pRes;
+		DWORD iResSize;
 
-		// Read the version information to memory
-		dwVerInfoSize = GetFileVersionInfoSize( szFile, NULL );
-		if ( dwVerInfoSize > 0 ) {
+		//? We won't be using GetFileVersionInfoSize(..) and GetFileVersionInfo(..) API functions
+		//? They are unable to work with version info blocks that have a different language than the current thread's code page
+		//? We'll use our own extraction routines
+		//? (e.g. peinsider.exe)
+		err = ExtractVersionInfo( szFile, &pRes, &iResSize );
+		DebugString( _T("ExtractVersionInfo( File:\"%s\" ) = 0x%x\n"), szFile, err );
+		if (err == ERROR_SUCCESS) {
 
-			HANDLE hMem = GlobalAlloc( GMEM_MOVEABLE, dwVerInfoSize );
-			if ( hMem ) {
+			typedef struct _LANGANDCODEPAGE { WORD wLanguage; WORD wCodePage; } LANGANDCODEPAGE;
+			LANGANDCODEPAGE *pCodePage;
+			UINT iCodePageSize = sizeof( *pCodePage );
 
-				LPBYTE pMem = GlobalLock( hMem );
-				if ( pMem ) {
+			// Determine the language of the version info
+			if (VerQueryValue( pRes, _T( "\\VarFileInfo\\Translation" ), (LPVOID*)&pCodePage, &iCodePageSize )) {
 
-					if ( GetFileVersionInfo( szFile, 0, dwVerInfoSize, pMem )) {
+				TCHAR szTemp[255];
+				LPCTSTR szValue = NULL;
+				UINT iValueLen = 0;
+				BOOL bFound;
 
-						typedef struct _LANGANDCODEPAGE {
-							WORD wLanguage;
-							WORD wCodePage;
-						} LANGANDCODEPAGE;
+				// Read the specified version info string
+				wsprintf( szTemp, _T( "\\StringFileInfo\\%04x%04x\\%s" ), pCodePage->wLanguage, pCodePage->wCodePage, szStringName );
+				bFound = VerQueryValue( pRes, szTemp, (LPVOID*)&szValue, &iValueLen );
+				if (!bFound) {
 
-						LANGANDCODEPAGE *pCodePage;
-						UINT iCodePageSize = sizeof( *pCodePage );
-
-						// Determine the language of the version info
-						if ( VerQueryValue( pMem, _T("\\VarFileInfo\\Translation"), (LPVOID*)&pCodePage, &iCodePageSize )) {
-
-							TCHAR szTemp[255];
-							LPCTSTR szValue = NULL;
-							UINT iValueLen = 0;
-							BOOL bFound;
-
-							// Read the specified version info string
-							wsprintf( szTemp, _T("\\StringFileInfo\\%04x%04x\\%s"), pCodePage->wLanguage, pCodePage->wCodePage, szStringName );
-							bFound = VerQueryValue( pMem, szTemp, (LPVOID*)&szValue, &iValueLen );
-							if ( !bFound ) {
-
-								/// There might be executables where the "StringFileInfo" sub-block doesn't match the language specified by "Translation"
-								/// In such case, we'll manually look for the first "StringFileInfo" translation.
-								/// (Reproduced with a FunctionList.dll modified with XNResourceEditor)
-								LPWORD p = (LPWORD)pMem;
-								LPWSTR pszTranslation = NULL;
-								bFound = FindFirstStringFileInfo( &p, NULL, &pszTranslation );
-								if ( bFound ) {
-									wsprintf( szTemp, _T("\\StringFileInfo\\%ws\\%s"), pszTranslation, szStringName );
-									bFound = VerQueryValue( pMem, szTemp, (LPVOID*)&szValue, &iValueLen );
-								}
-							}
-
-							// Prepare the output
-							if ( szValue && *szValue ) {
-								lstrcpyn( szStringValue, szValue, iStringValueLen );
-								if ( iValueLen > iStringValueLen ) {
-									// The output buffer is not large enough
-									// We'll return the truncated string, and ERROR_BUFFER_OVERFLOW error code
-									err = ERROR_BUFFER_OVERFLOW;
-								}
-
-							} else {
-								err = ERROR_NOT_FOUND;
-							}
-						} else {
-							err = ERROR_NOT_FOUND;
-						}
-					} else {
-						err = GetLastError();
+					/// There might be executables where the "StringFileInfo" sub-block doesn't match the language specified by "Translation"
+					/// In such case, we'll manually look for the first "StringFileInfo" translation.
+					/// (Reproduced with a FunctionList.dll modified with XNResourceEditor)
+					LPWORD p = (LPWORD)pRes;
+					LPWSTR pszTranslation = NULL;
+					bFound = FindFirstStringFileInfo( &p, NULL, &pszTranslation );
+					if (bFound) {
+						wsprintf( szTemp, _T( "\\StringFileInfo\\%ws\\%s" ), pszTranslation, szStringName );
+						bFound = VerQueryValue( pRes, szTemp, (LPVOID*)&szValue, &iValueLen );
 					}
-
-#if defined (_DEBUG)
-					ZeroMemory( pMem, dwVerInfoSize );
-					pMem = NULL;
-#endif
-					GlobalUnlock( hMem );
-
-				} else {
-					err = GetLastError();
 				}
 
-				GlobalFree( hMem );
+				// Prepare the output
+				if (szValue && *szValue) {
+					lstrcpyn( szStringValue, szValue, iStringValueLen );
+					if (iValueLen > iStringValueLen) {
+						// The output buffer is not large enough
+						// We'll return the truncated string, and ERROR_BUFFER_OVERFLOW error code
+						err = ERROR_BUFFER_OVERFLOW;
+					}
 
+				} else {
+					err = ERROR_NOT_FOUND;
+				}
 			} else {
-				err = GetLastError();
+				err = ERROR_NOT_FOUND;
 			}
-		} else {
-			err = GetLastError();
+
+			HeapFree( GetProcessHeap(), 0, pRes );
 		}
 	} else {
 		err = ERROR_INVALID_PARAMETER;
@@ -172,64 +169,32 @@ DWORD ReadVersionInfoString(
 
 
 //++ ReadFixedFileInfo
-DWORD ReadFixedFileInfo(
-	__in_opt LPCTSTR szFile,
-	__out VS_FIXEDFILEINFO *pFfi
-	)
+DWORD ReadFixedFileInfo( __in_opt LPCTSTR szFile, __out VS_FIXEDFILEINFO *pFfi )
 {
 	DWORD err = ERROR_SUCCESS;
 
-	// Validate parameters
+	if (pFfi)
+		MyMemset( pFfi, 0, sizeof( *pFfi ) );
 	if ( pFfi && szFile && *szFile ) {
 
-		DWORD dwVerInfoSize;
+		LPBYTE pRes;
+		DWORD iResSize;
 
-		// Read the version information to memory
-		dwVerInfoSize = GetFileVersionInfoSize( szFile, NULL );
-		if ( dwVerInfoSize > 0 ) {
+		err = ExtractVersionInfo( szFile, &pRes, &iResSize );
+		if (err == ERROR_SUCCESS) {
 
-			HANDLE hMem = GlobalAlloc( GMEM_MOVEABLE, dwVerInfoSize );
-			if ( hMem ) {
+			VS_FIXEDFILEINFO *ffi = NULL;
+			UINT iSize = sizeof( ffi );	/// size of pointer!
+			if (VerQueryValue( pRes, _T( "\\" ), (LPVOID*)&ffi, &iSize )) {
 
-				LPBYTE pMem = GlobalLock( hMem );
-				if ( pMem ) {
-
-					if ( GetFileVersionInfo( szFile, 0, dwVerInfoSize, pMem )) {
-
-						// Query
-						VS_FIXEDFILEINFO *pMemFfi = NULL;
-						UINT iSize = sizeof( pMemFfi );	/// size of pointer!
-						if ( VerQueryValue( pMem, _T("\\"), (LPVOID*)&pMemFfi, &iSize )) {
-
-							// Copy the data to the output buffer
-							UINT i;
-							for ( i = 0; i < iSize; i++ )
-								((LPBYTE)pFfi)[i] = ((LPBYTE)pMemFfi)[i];
-
-						} else {
-							err = ERROR_NOT_FOUND;
-						}
-					} else {
-						err = GetLastError();
-					}
-
-#if defined (_DEBUG)
-					ZeroMemory( pMem, dwVerInfoSize );
-					pMem = NULL;
-#endif
-					GlobalUnlock( hMem );
-
-				} else {
-					err = GetLastError();
-				}
-
-				GlobalFree( hMem );
+				// Return data to caller
+				MyMemcpy( pFfi, ffi, iSize );
 
 			} else {
-				err = GetLastError();
+				err = ERROR_NOT_FOUND;
 			}
-		} else {
-			err = GetLastError();
+
+			HeapFree( GetProcessHeap(), 0, pRes );
 		}
 	} else {
 		err = ERROR_INVALID_PARAMETER;
@@ -437,4 +402,182 @@ void __declspec(dllexport) GetProductVersion(
 		/// Free memory
 		GlobalFree( pszBuf );
 	}
+}
+
+// *******************************************************************************************
+// ** Custom VERSIONINFO routines
+// *******************************************************************************************
+
+//+ ENUMRESPROC
+typedef BOOL (CALLBACK *ENUMRESPROC)(
+	__in HMODULE  hModule,
+	__in LPCTSTR  pszResType,
+	__in LPCTSTR  pszResName,
+	__in WORD     iResLang,
+	__in LPBYTE   pResPtr,
+	__in ULONG    iResSize,
+	__in LONG_PTR lParam
+	);
+
+//++ (internal) structure ENUM_CONTEXT
+typedef struct _ENUM_CONTEXT {
+	LPCTSTR pszResType;						/// Resource type to match. Can be NULL
+	LPCTSTR pszResName;						/// Resource name to match. Can be NULL
+	WORD    iResLang;						/// Resource language to match. Can be 0
+	ENUMRESPROC fnCallback;					/// Callback function called for each resource that matches the search parameters
+	LONG_PTR    lCallbackParam;
+} ENUM_CONTEXT;
+
+
+//++ (internal) _Callback_EnumResLang
+BOOL CALLBACK _Callback_EnumResLang( __in_opt HMODULE hModule, __in LPCTSTR lpszType, __in LPCTSTR lpszName, __in WORD wIDLanguage, __in LONG_PTR lParam )
+{
+	BOOL bMatch = FALSE;
+	ENUM_CONTEXT *ctx = (ENUM_CONTEXT*)lParam;
+
+	// Determine if this resource language fits the enumeration criteria
+	if (( ctx->iResLang == LANG_NEUTRAL ) || ( wIDLanguage == ctx->iResLang ))
+		bMatch = TRUE;
+
+	if ( bMatch ) {
+
+		DWORD err = ERROR_SUCCESS;
+		HRSRC hRsrc = FindResourceEx( hModule, lpszType, lpszName, wIDLanguage );
+		if ( hRsrc ) {
+
+			// Resource data
+			HGLOBAL hGlobal = LoadResource( hModule, hRsrc );
+			if ( hGlobal ) {
+				LPVOID pResPtr = LockResource( hGlobal );
+				if ( pResPtr ) {
+
+					// Resource data size
+					ULONG iResSize = SizeofResource( hModule, hRsrc );
+
+					// Call the user supplied function
+					return ctx->fnCallback( hModule, lpszType, lpszName, wIDLanguage, (LPBYTE)pResPtr, iResSize, ctx->lCallbackParam );
+
+				} else {
+					err = ERROR_NOT_FOUND;
+				}
+			} else {
+				err = GetLastError();
+			}
+		} else {
+			err = GetLastError();
+		}
+		UNREFERENCED_PARAMETER( err );
+	}
+
+	return TRUE;
+}
+
+
+//++ (internal) _Callback_EnumResName
+BOOL CALLBACK _Callback_EnumResName( __in_opt HMODULE hModule, __in LPCTSTR lpszType, __in LPTSTR lpszName, __in LONG_PTR lParam )
+{
+	BOOL bMatch = FALSE;
+	ENUM_CONTEXT *ctx = (ENUM_CONTEXT*)lParam;
+
+	// Determine if this name of resource fits the enumeration criteria
+	if ( ctx->pszResName == NULL ) {
+		bMatch = TRUE;	/// Any resource name
+	} else if ( lpszName == ctx->pszResName ) {
+		bMatch = TRUE;	/// Same resource name
+	} else if ( !IS_INTRESOURCE(lpszName) && !IS_INTRESOURCE(ctx->pszResName) && ( lstrcmp( lpszName, ctx->pszResName ) == 0 )) {
+		bMatch = TRUE;	/// Same (literal) resource name
+	}
+
+	// Enumerate resource languages
+	if ( bMatch )
+		return EnumResourceLanguages( hModule, lpszType, lpszName, _Callback_EnumResLang, lParam );
+
+	return TRUE;
+}
+
+
+//++ (internal) _Callback_EnumResType
+BOOL CALLBACK _Callback_EnumResType( __in_opt HMODULE hModule, __in LPTSTR lpszType, __in LONG_PTR lParam )
+{
+	BOOL bMatch = FALSE;
+	ENUM_CONTEXT *ctx = (ENUM_CONTEXT*)lParam;
+
+	// Determine if this type of resource fits the enumeration criteria
+	if ( ctx->pszResType == NULL ) {
+		bMatch = TRUE;	/// Any resource type
+	} else if ( lpszType == ctx->pszResType ) {
+		bMatch = TRUE;	/// Same resource type
+	} else if ( !IS_INTRESOURCE(lpszType) && !IS_INTRESOURCE(ctx->pszResType) && ( lstrcmp( lpszType, ctx->pszResType ) == 0 )) {
+		bMatch = TRUE;	/// Same (literal) resource type
+	}
+
+	// Enumerate resource names
+	if ( bMatch )
+		return EnumResourceNames( hModule, lpszType, _Callback_EnumResName, lParam );
+
+	return TRUE;
+}
+
+
+typedef struct {
+	LPBYTE pRes;		/// Must be HeapFree(..)-ed by the caller
+	ULONG iResSize;
+} EXTRACT_VERSIONINFO_CONTEXT;
+
+
+//++ ExtractVersionInfoCallback
+BOOL CALLBACK ExtractVersionInfoCallback( __in HMODULE hModule, __in LPCTSTR pszResType, __in LPCTSTR pszResName, __in WORD iResLang, __in LPBYTE pResPtr, __in ULONG iResSize, __in LONG_PTR lParam )
+{
+	if (pszResType == RT_VERSION) {
+
+		// Return a copy of the resource to the caller
+		EXTRACT_VERSIONINFO_CONTEXT *pCtx = (EXTRACT_VERSIONINFO_CONTEXT*)lParam;
+		pCtx->pRes = (LPBYTE)HeapAlloc( GetProcessHeap(), 0, iResSize );
+		if (pCtx->pRes) {
+			MyMemcpy( pCtx->pRes, pResPtr, iResSize );
+			pCtx->iResSize = iResSize;
+			return FALSE;		/// Stop resource enumeration
+		}
+	}
+	return TRUE;	/// Continue resource enumeration
+}
+
+
+//++ ExtractVersionInfo
+DWORD ExtractVersionInfo( __in LPCTSTR szFile, __out BYTE **ppBuf, __out ULONG *piBufSize )
+{
+	DWORD err = ERROR_SUCCESS;
+	HMODULE hMod;
+
+	if (!szFile || !*szFile || !ppBuf || !piBufSize)
+		return ERROR_INVALID_PARAMETER;
+	*ppBuf = NULL, *piBufSize = 0;
+
+	hMod = LoadLibraryEx( szFile, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE );
+	if (hMod) {
+
+		// Enumerate RT_VERSION resources
+		EXTRACT_VERSIONINFO_CONTEXT victx;
+		ENUM_CONTEXT enumctx;
+
+		MyMemset( &victx, 0, sizeof( victx ) );
+		MyMemset( &enumctx, 0, sizeof( enumctx ) );
+
+		enumctx.pszResType = RT_VERSION;
+		enumctx.fnCallback = ExtractVersionInfoCallback;
+		enumctx.lCallbackParam = (LONG_PTR)&victx;
+
+		err = EnumResourceTypes( hMod, _Callback_EnumResType, (LONG_PTR)&enumctx ) ? ERROR_SUCCESS : GetLastError();
+		if (err == ERROR_RESOURCE_ENUM_USER_STOP)
+			err = ERROR_SUCCESS;
+
+		*ppBuf = victx.pRes;
+		*piBufSize = victx.iResSize;
+
+		FreeLibrary( hMod );
+
+	} else {
+		err = GetLastError();
+	}
+	return err;
 }
