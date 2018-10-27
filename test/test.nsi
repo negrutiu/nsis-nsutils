@@ -16,10 +16,8 @@
 # The folder where NSutils.dll is
 !ifdef NSIS_UNICODE
 	!define NSUTILS "$EXEDIR\..\DebugW\NSutils.dll"		; DEBUGGING_ENABLED
-	!AddPluginDir "..\ReleaseW-mingw"
 !else
 	!define NSUTILS "$EXEDIR\..\DebugA\NSutils.dll"		; DEBUGGING_ENABLED
-	!AddPluginDir "..\ReleaseA-mingw"
 !endif
 
 !define ERROR_SUCCESS 0
@@ -74,15 +72,33 @@ Function PrintFileVersion
 	Pop $0
 	${Print} "    ProductVersion: $0 ($1,$2,$3,$4)"
 
-	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "CompanyName"
+!ifdef DEBUGGING_ENABLED
+	Push "CompanyName"
+	Push $R0
+	CallInstDLL "${NSUTILS}" GetVersionInfoString
+!else
+	NSutils::GetVersionInfoString /NOUNLOAD $R0 "CompanyName"
+!endif
 	Pop $0
 	${Print} "    CompanyName: $0"
 
-	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "FileDescription"
+!ifdef DEBUGGING_ENABLED
+	Push "FileDescription"
+	Push $R0
+	CallInstDLL "${NSUTILS}" GetVersionInfoString
+!else
+	NSutils::GetVersionInfoString /NOUNLOAD $R0 "FileDescription"
+!endif
 	Pop $0
 	${Print} "    FileDescription: $0"
 
-	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "FileVersion"
+!ifdef DEBUGGING_ENABLED
+	Push "FileVersion"
+	Push $R0
+	CallInstDLL "${NSUTILS}" GetVersionInfoString
+!else
+	NSutils::GetVersionInfoString /NOUNLOAD $R0 "FileVersion"
+!endif
 	Pop $0
 	${Print} "    FileVersion: $0"
 
@@ -90,7 +106,13 @@ Function PrintFileVersion
 	Pop $0
 	${Print} "    InternalName: $0"
 
-	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "LegalCopyright"
+!ifdef DEBUGGING_ENABLED
+	Push "LegalCopyright"
+	Push $R0
+	CallInstDLL "${NSUTILS}" GetVersionInfoString
+!else
+	NSutils::GetVersionInfoString /NOUNLOAD $R0 "LegalCopyright"
+!endif
 	Pop $0
 	${Print} "    LegalCopyright: $0"
 
