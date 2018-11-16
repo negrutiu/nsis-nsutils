@@ -587,6 +587,11 @@ DWORD ExtractVersionInfo( __in LPCTSTR szFile, __out BYTE **ppBuf, __out ULONG *
 		if (err == ERROR_RESOURCE_ENUM_USER_STOP)
 			err = ERROR_SUCCESS;
 
+		/// In pre-Vista builds, EnumResourceTypes sometimes incorrectly returns ERROR_INSUFFICIENT_BUFFER
+		/// If we've found our RT_VERSION block, we clear the error...
+		if (victx.iResSize > 0)
+			err = ERROR_SUCCESS;
+
 		*ppBuf = victx.pRes;
 		*piBufSize = victx.iResSize;
 
