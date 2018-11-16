@@ -111,7 +111,6 @@ DWORD ReadVersionInfoString(
 		//? We'll use our own extraction routines
 		//? (e.g. peinsider.exe)
 		err = ExtractVersionInfo( szFile, &pRes, &iResSize );
-		DebugString( _T("ExtractVersionInfo( File:\"%s\" ) = 0x%x\n"), szFile, err );
 		if (err == ERROR_SUCCESS) {
 
 			typedef struct _LANGANDCODEPAGE { WORD wLanguage; WORD wCodePage; } LANGANDCODEPAGE;
@@ -192,6 +191,7 @@ DWORD ReadFixedFileInfo( __in_opt LPCTSTR szFile, __out VS_FIXEDFILEINFO *pFfi )
 
 			} else {
 				err = ERROR_NOT_FOUND;
+				DebugString( _T("[e] VerQueryValue( \"%s\" ) = 0x%x\n"), szFile, err );
 			}
 
 			HeapFree( GetProcessHeap(), 0, pRes );
@@ -435,6 +435,8 @@ BOOL CALLBACK _Callback_EnumResLang( __in_opt HMODULE hModule, __in LPCTSTR lpsz
 	BOOL bMatch = FALSE;
 	ENUM_CONTEXT *ctx = (ENUM_CONTEXT*)lParam;
 
+	///DebugString( _T("[i] %hs( Type:%p, Name:%p, Lang:%hu )\n"), __FUNCTION__, lpszType, lpszName, wIDLanguage );
+
 	// Determine if this resource language fits the enumeration criteria
 	if (( ctx->iResLang == LANG_NEUTRAL ) || ( wIDLanguage == ctx->iResLang ))
 		bMatch = TRUE;
@@ -459,12 +461,15 @@ BOOL CALLBACK _Callback_EnumResLang( __in_opt HMODULE hModule, __in LPCTSTR lpsz
 
 				} else {
 					err = ERROR_NOT_FOUND;
+					DebugString( _T("[e] LockResource( Name:%s ) = 0x%x\n"), lpszName, err );
 				}
 			} else {
 				err = GetLastError();
+				DebugString( _T("[e] LoadResource( Name:%s ) = 0x%x\n"), lpszName, err );
 			}
 		} else {
 			err = GetLastError();
+			DebugString( _T("[e] FindResourceEx( Name:%s ) = 0x%x\n"), lpszName, err );
 		}
 		UNREFERENCED_PARAMETER( err );
 	}
@@ -478,6 +483,8 @@ BOOL CALLBACK _Callback_EnumResName( __in_opt HMODULE hModule, __in LPCTSTR lpsz
 {
 	BOOL bMatch = FALSE;
 	ENUM_CONTEXT *ctx = (ENUM_CONTEXT*)lParam;
+
+	///DebugString( _T("[i] %hs( Type:%p, Name:%p )\n"), __FUNCTION__, lpszType, lpszName );
 
 	// Determine if this name of resource fits the enumeration criteria
 	if ( ctx->pszResName == NULL ) {
@@ -501,6 +508,8 @@ BOOL CALLBACK _Callback_EnumResType( __in_opt HMODULE hModule, __in LPTSTR lpszT
 {
 	BOOL bMatch = FALSE;
 	ENUM_CONTEXT *ctx = (ENUM_CONTEXT*)lParam;
+
+	///DebugString( _T("[i] %hs( Type:%p )\n"), __FUNCTION__, lpszType );
 
 	// Determine if this type of resource fits the enumeration criteria
 	if ( ctx->pszResType == NULL ) {
@@ -540,6 +549,7 @@ BOOL CALLBACK ExtractVersionInfoCallback( __in HMODULE hModule, __in LPCTSTR psz
 
 		pCtx->pRes = (LPBYTE)HeapAlloc( GetProcessHeap(), 0, iResBufSize );
 		if (pCtx->pRes) {
+			///DebugString( _T("[i] %hs( Type:%p, Name:%p, Lang:%hu, Ptr:0x%p, ResSize:%u, ResBufSize:%u )\n"), __FUNCTION__, pszResType, pszResName, iResLang, pResPtr, iResSize, iResBufSize );
 			MyMemcpy( pCtx->pRes, pResPtr, iResSize );
 			pCtx->iResSize = iResBufSize;
 			return FALSE;		/// Stop resource enumeration

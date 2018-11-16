@@ -64,11 +64,21 @@ Function PrintFileVersion
 
 	${Print} "$R0"
 
+!ifdef DEBUGGING_ENABLED
+	Push $R0
+	CallInstDLL "${NSUTILS}" GetFileVersion
+!else
 	NSutils::GetFileVersion /NOUNLOAD "$R0"
+!endif
 	Pop $0
 	${Print} "    FileVersion: $0 ($1,$2,$3,$4)"
 
+!ifdef DEBUGGING_ENABLED
+	Push $R0
+	CallInstDLL "${NSUTILS}" GetProductVersion
+!else
 	NSutils::GetProductVersion /NOUNLOAD "$R0"
+!endif
 	Pop $0
 	${Print} "    ProductVersion: $0 ($1,$2,$3,$4)"
 
@@ -102,7 +112,13 @@ Function PrintFileVersion
 	Pop $0
 	${Print} "    FileVersion: $0"
 
+!ifdef DEBUGGING_ENABLED
+	Push "InternalName"
+	Push $R0
+	CallInstDLL "${NSUTILS}" GetVersionInfoString
+!else
 	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "InternalName"
+!endif
 	Pop $0
 	${Print} "    InternalName: $0"
 
@@ -116,15 +132,33 @@ Function PrintFileVersion
 	Pop $0
 	${Print} "    LegalCopyright: $0"
 
+!ifdef DEBUGGING_ENABLED
+	Push "OriginalFilename"
+	Push $R0
+	CallInstDLL "${NSUTILS}" GetVersionInfoString
+!else
 	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "OriginalFilename"
+!endif
 	Pop $0
 	${Print} "    OriginalFilename: $0"
 
+!ifdef DEBUGGING_ENABLED
+	Push "ProductName"
+	Push $R0
+	CallInstDLL "${NSUTILS}" GetVersionInfoString
+!else
 	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "ProductName"
+!endif
 	Pop $0
 	${Print} "    ProductName: $0"
 
+!ifdef DEBUGGING_ENABLED
+	Push "ProductVersion"
+	Push $R0
+	CallInstDLL "${NSUTILS}" GetVersionInfoString
+!else
 	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "ProductVersion"
+!endif
 	Pop $0
 	${Print} "    ProductVersion: $0"
 
