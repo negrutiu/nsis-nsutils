@@ -532,10 +532,16 @@ BOOL CALLBACK ExtractVersionInfoCallback( __in HMODULE hModule, __in LPCTSTR psz
 
 		// Return a copy of the resource to the caller
 		EXTRACT_VERSIONINFO_CONTEXT *pCtx = (EXTRACT_VERSIONINFO_CONTEXT*)lParam;
-		pCtx->pRes = (LPBYTE)HeapAlloc( GetProcessHeap(), 0, iResSize );
+
+		/// ReactOS (version.c) quote:
+		///   XP/W2K/W2K3 uses a buffer which is 2 times the actual needed space + 4 bytes "FE2X"
+		///	  This extra buffer is used for Unicode to ANSI conversions in A-Calls
+		ULONG iResBufSize = (iResSize * 2) + 4;
+
+		pCtx->pRes = (LPBYTE)HeapAlloc( GetProcessHeap(), 0, iResBufSize );
 		if (pCtx->pRes) {
 			MyMemcpy( pCtx->pRes, pResPtr, iResSize );
-			pCtx->iResSize = iResSize;
+			pCtx->iResSize = iResBufSize;
 			return FALSE;		/// Stop resource enumeration
 		}
 	}
