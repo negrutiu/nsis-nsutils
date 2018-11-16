@@ -1,9 +1,11 @@
+.vs
 
 DebugA
 DebugW
 ReleaseA*
 ReleaseW*
 ipch
+test/*.exe
 
 *.opensdf
 *.sdf
