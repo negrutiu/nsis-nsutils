@@ -586,6 +586,8 @@ DWORD ExtractVersionInfo( __in LPCTSTR szFile, __out BYTE **ppBuf, __out ULONG *
 		err = EnumResourceTypes( hMod, _Callback_EnumResType, (LONG_PTR)&enumctx ) ? ERROR_SUCCESS : GetLastError();
 		if (err == ERROR_RESOURCE_ENUM_USER_STOP)
 			err = ERROR_SUCCESS;
+		else if (!enumctx.pszResName)
+			err = ERROR_NOT_FOUND;
 
 		/// In pre-Vista builds, EnumResourceTypes sometimes incorrectly returns ERROR_INSUFFICIENT_BUFFER
 		/// If we've found our RT_VERSION block, we clear the error...
