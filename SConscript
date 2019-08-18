@@ -8,7 +8,6 @@ files = Split("""
 	strblock.c
 	utils.c
 	verinfo.c
-	nsiswapi/pluginapi.c
 """)
 
 resources = Split("""

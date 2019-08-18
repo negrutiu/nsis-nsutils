@@ -9,6 +9,10 @@ HINSTANCE g_hModule = NULL;
 // Notifications
 extern VOID UtilsUnload();
 
+// NSIS plugin API
+extra_parameters *g_ep = NULL;
+HWND g_hwndparent = NULL;
+
 //++ DllMain
 BOOL WINAPI DllMain(
 	HINSTANCE hInst,

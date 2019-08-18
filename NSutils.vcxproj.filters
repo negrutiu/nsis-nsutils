@@ -21,12 +21,6 @@
     <ClCompile Include="verinfo.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="nsiswapi\pluginapi.c">
-      <Filter>NSIS</Filter>
-    </ClCompile>
-    <ClCompile Include="main.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -42,17 +36,14 @@
     <ClCompile Include="handles.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="nsis\pluginapi.c">
+      <Filter>NSIS</Filter>
+    </ClCompile>
+    <ClCompile Include="main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="nsiswapi\api.h">
-      <Filter>NSIS</Filter>
-    </ClInclude>
-    <ClInclude Include="nsiswapi\nsis_tchar.h">
-      <Filter>NSIS</Filter>
-    </ClInclude>
-    <ClInclude Include="nsiswapi\pluginapi.h">
-      <Filter>NSIS</Filter>
-    </ClInclude>
     <ClInclude Include="strblock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -61,6 +52,15 @@
     </ClInclude>
     <ClInclude Include="main.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nsis\api.h">
+      <Filter>NSIS</Filter>
+    </ClInclude>
+    <ClInclude Include="nsis\nsis_tchar.h">
+      <Filter>NSIS</Filter>
+    </ClInclude>
+    <ClInclude Include="nsis\pluginapi.h">
+      <Filter>NSIS</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

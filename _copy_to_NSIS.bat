@@ -11,7 +11,6 @@ echo ** NSutils
 echo ***********************
 
 mkdir							"%~1\Contrib\NSutils" 2> NUL
-xcopy "%~dp0\nsiswapi"			"%~1\Contrib\NSutils\nsiswapi" /EIDYF
 xcopy "%~dp0\*.h"				"%~1\Contrib\NSutils" /DYF
 xcopy "%~dp0\*.c"				"%~1\Contrib\NSutils" /DYF
 xcopy "%~dp0\*.cpp"				"%~1\Contrib\NSutils" /DYF

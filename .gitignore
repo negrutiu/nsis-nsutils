@@ -1,11 +1,10 @@
-.vs
-
-DebugA
-DebugW
-ReleaseA*
-ReleaseW*
-ipch
+/nsis
 test/*.exe
+
+Debug-*
+Release-*
+ipch
+.vs
 
 *.opensdf
 *.sdf
