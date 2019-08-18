@@ -1,8 +1,10 @@
 ﻿
-!ifdef ANSI
-	Unicode false
+!ifdef AMD64
+	Target amd64-unicode
+!else ifdef ANSI
+	Target x86-ansi
 !else
-	Unicode true	; Default
+	Target x86-unicode	; Default
 !endif
 
 !include "MUI2.nsh"
@@ -13,11 +15,19 @@
 
 ;!define DEBUGGING_ENABLED
 
-# The folder where NSutils.dll is
-!ifdef NSIS_UNICODE
-	!define NSUTILS "$EXEDIR\..\DebugW\NSutils.dll"		; DEBUGGING_ENABLED
+# NSutils.dll debug location (DEBUGGING_ENABLED only)
+!ifdef DEBUGGING_ENABLED
+	!ifdef NSIS_AMD64
+		!define NSUTILS "$EXEDIR\..\Debug-amd64-unicode\NSutils.dll"
+	!else ifdef NSIS_UNICODE
+		!define NSUTILS "$EXEDIR\..\Debug-x86-unicode\NSutils.dll"
+	!else
+		!define NSUTILS "$EXEDIR\..\Debug-x86-ansi\NSutils.dll"
+	!endif
 !else
-	!define NSUTILS "$EXEDIR\..\DebugA\NSutils.dll"		; DEBUGGING_ENABLED
+	!AddPluginDir /x86-ansi      "..\Release-mingw-x86-ansi"
+	!AddPluginDir /x86-unicode   "..\Release-mingw-x86-unicode"
+	!AddPluginDir /amd64-unicode "..\Release-mingw-amd64-unicode"
 !endif
 
 !define ERROR_SUCCESS 0
@@ -32,7 +42,10 @@ SpaceTexts "none"
 !insertmacro MUI_LANGUAGE "English"
 
 # Installer details
-!ifdef NSIS_UNICODE
+!ifdef NSIS_AMD64
+	Name "NSutils64"
+	OutFile "NSutils64.exe"
+!else ifdef NSIS_UNICODE
 	Name "NSutilsW"
 	OutFile "NSutilsW.exe"
 !else
