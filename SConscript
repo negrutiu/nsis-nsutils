@@ -27,7 +27,10 @@ libs = Split("""
 	version
 """)
 
-examples = ''
+examples = Split("""
+	Test/NSutils-Test.nsi
+	Test/NSutils-Test-build.bat
+""")
 
 docs = Split("""
 	NSutils.Readme.txt
