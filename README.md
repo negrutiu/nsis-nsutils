@@ -20,4 +20,4 @@ CloseFileHandles|Close files that are locked by other programs
 RegMultiSzInsertBefore<br>RegMultiSzInsertAfter<br>RegMultiSzInsertAtIndex<br>RegMultiSzDelete|Operations with `REG_MULTI_SZ` registry values
 CPUID|Retrieve CPU capabilities
 CompareFiles|Check if two files are equal (content comparison)
-DriveIsSSD|Check if a drive is SSD, by examining its `TRIM` capability
+DriveIsSSD|Check if a drive is SSD by examining its `TRIM` capability
