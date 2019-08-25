@@ -13,24 +13,18 @@
 !include "FileFunc.nsh"
 !include "Win\WinNT.nsh"
 
-;!define DEBUGGING_ENABLED
+# NSutils.dll location
+;!AddPluginDir /x86-ansi      "..\Release-mingw-x86-ansi"
+;!AddPluginDir /x86-unicode   "..\Release-mingw-x86-unicode"
+;!AddPluginDir /amd64-unicode "..\Release-mingw-amd64-unicode"
 
-# NSutils.dll debug location (DEBUGGING_ENABLED only)
-!ifdef DEBUGGING_ENABLED
-	!ifdef NSIS_AMD64
-		!define NSUTILS "$EXEDIR\..\Debug-amd64-unicode\NSutils.dll"
-	!else ifdef NSIS_UNICODE
-		!define NSUTILS "$EXEDIR\..\Debug-x86-unicode\NSutils.dll"
-	!else
-		!define NSUTILS "$EXEDIR\..\Debug-x86-ansi\NSutils.dll"
-	!endif
-!else
-	!AddPluginDir /x86-ansi      "..\Release-mingw-x86-ansi"
-	!AddPluginDir /x86-unicode   "..\Release-mingw-x86-unicode"
-	!AddPluginDir /amd64-unicode "..\Release-mingw-amd64-unicode"
-!endif
+!define /ifndef TRUE 1
+!define /ifndef FALSE 0
+!define /ifndef ERROR_SUCCESS 0
 
-!define ERROR_SUCCESS 0
+# GUI settings
+!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\orange-install-nsis.ico"
+!define MUI_WELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\orange-nsis.bmp"
 
 SpaceTexts "none"
 !define MUI_COMPONENTSPAGE_NODESC
@@ -43,14 +37,14 @@ SpaceTexts "none"
 
 # Installer details
 !ifdef NSIS_AMD64
-	Name "NSutils64"
-	OutFile "NSutils64.exe"
+	Name    "NSutils-Test-amd64-unicode"
+	OutFile "NSutils-Test-amd64-unicode.exe"
 !else ifdef NSIS_UNICODE
-	Name "NSutilsW"
-	OutFile "NSutilsW.exe"
+	Name    "NSutils-Test-x86-unicode"
+	OutFile "NSutils-Test-x86-unicode.exe"
 !else
-	Name "NSutilsA"
-	OutFile "NSutilsA.exe"
+	Name    "NSutils-Test-x86-ansi"
+	OutFile "NSutils-Test-x86-ansi.exe"
 !endif
 
 XPStyle on
@@ -61,12 +55,6 @@ ShowInstDetails show
 
 !define Print DetailPrint
 
-!ifndef TRUE
-	!define TRUE 1
-!endif
-!ifndef FALSE
-	!define FALSE 0
-!endif
 
 Function .onInit
 FunctionEnd
@@ -77,101 +65,43 @@ Function PrintFileVersion
 
 	${Print} "$R0"
 
-!ifdef DEBUGGING_ENABLED
-	Push $R0
-	CallInstDLL "${NSUTILS}" GetFileVersion
-!else
-	NSutils::GetFileVersion /NOUNLOAD "$R0"
-!endif
+	NSutils::GetFileVersion "$R0"
 	Pop $0
 	${Print} "    FileVersion: $0 ($1,$2,$3,$4)"
 
-!ifdef DEBUGGING_ENABLED
-	Push $R0
-	CallInstDLL "${NSUTILS}" GetProductVersion
-!else
-	NSutils::GetProductVersion /NOUNLOAD "$R0"
-!endif
+	NSutils::GetProductVersion "$R0"
 	Pop $0
 	${Print} "    ProductVersion: $0 ($1,$2,$3,$4)"
 
-!ifdef DEBUGGING_ENABLED
-	Push "CompanyName"
-	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
-!else
-	NSutils::GetVersionInfoString /NOUNLOAD $R0 "CompanyName"
-!endif
+	NSutils::GetVersionInfoString $R0 "CompanyName"
 	Pop $0
 	${Print} "    CompanyName: $0"
 
-!ifdef DEBUGGING_ENABLED
-	Push "FileDescription"
-	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
-!else
-	NSutils::GetVersionInfoString /NOUNLOAD $R0 "FileDescription"
-!endif
+	NSutils::GetVersionInfoString $R0 "FileDescription"
 	Pop $0
 	${Print} "    FileDescription: $0"
 
-!ifdef DEBUGGING_ENABLED
-	Push "FileVersion"
-	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
-!else
-	NSutils::GetVersionInfoString /NOUNLOAD $R0 "FileVersion"
-!endif
+	NSutils::GetVersionInfoString $R0 "FileVersion"
 	Pop $0
 	${Print} "    FileVersion: $0"
 
-!ifdef DEBUGGING_ENABLED
-	Push "InternalName"
-	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
-!else
-	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "InternalName"
-!endif
+	NSutils::GetVersionInfoString "$R0" "InternalName"
 	Pop $0
 	${Print} "    InternalName: $0"
 
-!ifdef DEBUGGING_ENABLED
-	Push "LegalCopyright"
-	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
-!else
-	NSutils::GetVersionInfoString /NOUNLOAD $R0 "LegalCopyright"
-!endif
+	NSutils::GetVersionInfoString $R0 "LegalCopyright"
 	Pop $0
 	${Print} "    LegalCopyright: $0"
 
-!ifdef DEBUGGING_ENABLED
-	Push "OriginalFilename"
-	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
-!else
-	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "OriginalFilename"
-!endif
+	NSutils::GetVersionInfoString "$R0" "OriginalFilename"
 	Pop $0
 	${Print} "    OriginalFilename: $0"
 
-!ifdef DEBUGGING_ENABLED
-	Push "ProductName"
-	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
-!else
-	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "ProductName"
-!endif
+	NSutils::GetVersionInfoString "$R0" "ProductName"
 	Pop $0
 	${Print} "    ProductName: $0"
 
-!ifdef DEBUGGING_ENABLED
-	Push "ProductVersion"
-	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
-!else
-	NSutils::GetVersionInfoString /NOUNLOAD "$R0" "ProductVersion"
-!endif
+	NSutils::GetVersionInfoString "$R0" "ProductVersion"
 	Pop $0
 	${Print} "    ProductVersion: $0"
 
@@ -204,7 +134,7 @@ Section /o "Test progress bar (default, steping back)"
 	${Print} "--------------------------------------------------------------"
 	${Print} "Looping with the default progress bar settings..."
 	${For} $R0 1 10
-		${Print} "    Step $R0/10"
+		${Print} "    Step $R0/10 (default behavior, the progress bar is stepping back)"
 		Sleep 100
 		Sleep 100
 		Sleep 100
@@ -231,7 +161,7 @@ SectionEnd
 
 Section /o "Test progress bar (fixed, no stepping back)"
 
-	NSutils::DisableProgressStepBack /NOUNLOAD $mui.InstFilesPage.ProgressBar
+	NSutils::DisableProgressStepBack $mui.InstFilesPage.ProgressBar
 	${Print} "--------------------------------------------------------------"
 	${Print} "Looping with DisableProgressStepBack..."
 	${For} $R0 1 10
@@ -256,7 +186,7 @@ Section /o "Test progress bar (fixed, no stepping back)"
 		Sleep 10
 		Sleep 10
 	${Next}
-	NSutils::RestoreProgressStepBack /NOUNLOAD $mui.InstFilesPage.ProgressBar
+	NSutils::RestoreProgressStepBack $mui.InstFilesPage.ProgressBar
 
 SectionEnd
 
@@ -272,13 +202,7 @@ Section /o "Test PendingFileRenameOperations (requires Admin)"
 	System::Call 'kernel32::MoveFileEx( t "$DESKTOP\MyNotepad.exe", t "$DESKTOP\MyNotepad2.exe", i ${MOVEFILE_DELAY_UNTIL_REBOOT} ) i.r0'
 	${Print} 'MoveFileEx( "DESKTOP\MyNotepad.exe", "DESKTOP\MyNotepad2.exe", MOVEFILE_DELAY_UNTIL_REBOOT ) == $0'
 
-!ifdef DEBUGGING_ENABLED
-	Push "$EXEDIR\PendingFileRename.log"
-	Push "MyNotepad"
-	CallInstDLL "${NSUTILS}" ExecutePendingFileRenameOperations
-!else
-	NSutils::ExecutePendingFileRenameOperations /NOUNLOAD "MyNotepad" "$EXEDIR\PendingFileRename.log"
-!endif
+	NSutils::ExecutePendingFileRenameOperations "MyNotepad" "$EXEDIR\PendingFileRename.log"
 	Pop $0	; Win32 error code
 	Pop $1	; Win32 error code of the first failed operation
 
@@ -302,23 +226,13 @@ Section /o "Test FindFileRenameOperations"
 	${Print} "--------------------------------------------------------------"
 
 	StrCpy $R0 "temp"	; Substring to find
-!ifdef DEBUGGING_ENABLED
-	Push $R0
-	CallInstDLL "${NSUTILS}" FindPendingFileRenameOperations
-!else
-	NSutils::FindPendingFileRenameOperations /NOUNLOAD $R0
-!endif
+	NSutils::FindPendingFileRenameOperations $R0
 	Pop $0
 	${Print} 'FindPendingFileRenameOperations( "$R0" ) == "$0"'
 
 
 	StrCpy $R0 "*"		; Substring to find
-!ifdef DEBUGGING_ENABLED
-	Push $R0
-	CallInstDLL "${NSUTILS}" FindPendingFileRenameOperations
-!else
-	NSutils::FindPendingFileRenameOperations /NOUNLOAD $R0
-!endif
+	NSutils::FindPendingFileRenameOperations $R0
 	Pop $0
 	${Print} 'FindPendingFileRenameOperations( "$R0" ) == "$0"'
 
@@ -332,7 +246,7 @@ Section /o "Test string table manipulation"
 	System::Call 'kernel32::CopyFile( t "$EXEPATH", t "$DESKTOP\MyTest.exe", i 0 ) i.r0'
 	${Print} 'CopyFile( "$EXEPATH", "DESKTOP\MyTest.exe" ) == $0'
 
-	NSutils::ReadResourceString /NOUNLOAD "$DESKTOP\MyUser32.dll" 100 1033
+	NSutils::ReadResourceString "$DESKTOP\MyUser32.dll" 100 1033
 	Pop $0
 	${If} $0 == ""
 		${Print} 'String #10: "$0". Ok!'
@@ -340,7 +254,7 @@ Section /o "Test string table manipulation"
 		${Print} 'String #10: "$0". Should have been empty!'
 	${EndIf}
 
-	NSutils::WriteResourceString /NOUNLOAD "$DESKTOP\MyTest.exe" 100 1033 "Dela beat cârciumă vin / Merg pe gard, de drum mă țin"
+	NSutils::WriteResourceString "$DESKTOP\MyTest.exe" 100 1033 "Dela beat cârciumă vin / Merg pe gard, de drum mă țin"
 	Pop $0
 	${If} $0 = ${FALSE}
 		StrCpy $0 "ERROR"
@@ -349,7 +263,7 @@ Section /o "Test string table manipulation"
 	${EndIf}
 	${Print} 'Write #100: $0'
 
-	NSutils::ReadResourceString /NOUNLOAD "$DESKTOP\MyTest.exe" 100 1033
+	NSutils::ReadResourceString "$DESKTOP\MyTest.exe" 100 1033
 	Pop $0
 	${If} $0 != ""
 		${Print} 'String #100: "$0". Ok!'
@@ -357,7 +271,7 @@ Section /o "Test string table manipulation"
 		${Print} 'String #100: "". Should have been valid!'
 	${EndIf}
 
-	NSutils::WriteResourceString /NOUNLOAD "$DESKTOP\MyTest.exe" 100 1033 ""
+	NSutils::WriteResourceString "$DESKTOP\MyTest.exe" 100 1033 ""
 	Pop $0
 	${If} $0 = ${FALSE}
 		StrCpy $0 "ERROR"
@@ -366,7 +280,7 @@ Section /o "Test string table manipulation"
 	${EndIf}
 	${Print} 'Delete #100: $0'
 
-	NSutils::ReadResourceString /NOUNLOAD "$DESKTOP\MyTest.exe" 100 1033
+	NSutils::ReadResourceString "$DESKTOP\MyTest.exe" 100 1033
 	Pop $0
 	${If} $0 == ""
 		${Print} 'String #10: "$0". Ok!'
@@ -396,7 +310,7 @@ Section /o "Test close file handles"
 	${Print} "TESTFILE = ${TESTFILE}"
 
 	; Open test file (handle1)
-	System::Call 'kernel32::CreateFile( t "${TESTFILE}", i ${GENERIC_READ}, i ${FILE_SHARE_READ}, p 0, i ${OPEN_ALWAYS}, i ${FILE_ATTRIBUTE_NORMAL}, p 0 ) i.r10 ? e'
+	System::Call 'kernel32::CreateFile( t "${TESTFILE}", i ${GENERIC_READ}, i ${FILE_SHARE_READ}, p 0, i ${OPEN_ALWAYS}, i ${FILE_ATTRIBUTE_NORMAL}, p 0 ) p.r10 ? e'
 	Pop $0	; GetLastError
 	${If} $R0 p<> ${INVALID_HANDLE_VALUE}
 		StrCpy $0 0
@@ -404,7 +318,7 @@ Section /o "Test close file handles"
 	${Print} 'CreateFile( #1, TESTFILE ) = $0'
 
 	; Open test file (handle2)
-	System::Call 'kernel32::CreateFile( t "${TESTFILE}", i ${GENERIC_READ}, i ${FILE_SHARE_READ}, p 0, i ${OPEN_ALWAYS}, i ${FILE_ATTRIBUTE_NORMAL}, p 0 ) i.r11 ? e'
+	System::Call 'kernel32::CreateFile( t "${TESTFILE}", i ${GENERIC_READ}, i ${FILE_SHARE_READ}, p 0, i ${OPEN_ALWAYS}, i ${FILE_ATTRIBUTE_NORMAL}, p 0 ) p.r11 ? e'
 	Pop $0	; GetLastError
 	${If} $R1 p<> ${INVALID_HANDLE_VALUE}
 		StrCpy $0 0
@@ -414,12 +328,7 @@ Section /o "Test close file handles"
 	; ----------------------------------
 
 	${Print} 'Close TESTFILE file handles'
-!ifdef DEBUGGING_ENABLED
-	Push "${TESTFILE}"
-	CallInstDLL "${NSUTILS}" CloseFileHandles
-!else
-	NSutils::CloseFileHandles /NOUNLOAD "${TESTFILE}"
-!endif
+	NSutils::CloseFileHandles "${TESTFILE}"
 	Pop $0
 	${Print} '  $0 handles closed'
 
@@ -466,34 +375,34 @@ Section /o "Test REG_MULTI_SZ operations"
 	DeleteRegKey HKCU "Software\MyCompany"
 
 	; Insert
-	NSutils::RegMultiSzInsertAfter /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "ccc" ""
+	NSutils::RegMultiSzInsertAfter "HKCU\Software\MyCompany" "MyValue" 0 "ccc" ""
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzInsert( "ccc" after "" ) = $0'
 
-	NSutils::RegMultiSzInsertBefore /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "bbb" "ccc"
+	NSutils::RegMultiSzInsertBefore "HKCU\Software\MyCompany" "MyValue" 0 "bbb" "ccc"
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzInsert( "bbb" before "ccc" ) = $0'
 
-	NSutils::RegMultiSzInsertAfter /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "ddd" "ccc"
+	NSutils::RegMultiSzInsertAfter "HKCU\Software\MyCompany" "MyValue" 0 "ddd" "ccc"
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzInsert( "ddd" after "ccc" ) = $0'
 
-	NSutils::RegMultiSzInsertAtIndex /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "aaa" 0
+	NSutils::RegMultiSzInsertAtIndex "HKCU\Software\MyCompany" "MyValue" 0 "aaa" 0
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzInsert( "ddd" at index 0 ) = $0'
 
-	NSutils::RegMultiSzInsertAtIndex /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "eee" 4
+	NSutils::RegMultiSzInsertAtIndex "HKCU\Software\MyCompany" "MyValue" 0 "eee" 4
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzInsert( "eee" at index 4 ) = $0'
 
 	; Verify
 	${For} $1 0 1000
-		NSutils::RegMultiSzRead /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 $1
+		NSutils::RegMultiSzRead "HKCU\Software\MyCompany" "MyValue" 0 $1
 		Pop $0	; Win32 error
 		Pop $2	; The substring
 		IntFmt $0 "0x%x" $0
@@ -527,32 +436,32 @@ Section /o "Test REG_MULTI_SZ operations"
 	${Next}
 
 	; Delete
-	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "ccc" ${TRUE}
+	NSutils::RegMultiSzDelete "HKCU\Software\MyCompany" "MyValue" 0 "ccc" ${TRUE}
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "ccc" ) = $0'
 
-	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "bbb" ${TRUE}
+	NSutils::RegMultiSzDelete "HKCU\Software\MyCompany" "MyValue" 0 "bbb" ${TRUE}
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "bbb" ) = $0'
 
-	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "aaa" ${TRUE}
+	NSutils::RegMultiSzDelete "HKCU\Software\MyCompany" "MyValue" 0 "aaa" ${TRUE}
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "aaa" ) = $0'
 
-	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "ddd" ${TRUE}
+	NSutils::RegMultiSzDelete "HKCU\Software\MyCompany" "MyValue" 0 "ddd" ${TRUE}
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "ddd" ) = $0'
 
-	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "eee" ${TRUE}
+	NSutils::RegMultiSzDelete "HKCU\Software\MyCompany" "MyValue" 0 "eee" ${TRUE}
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "eee" ) = $0'
 
-	NSutils::RegMultiSzDelete /NOUNLOAD "HKCU\Software\MyCompany" "MyValue" 0 "xxx" ${TRUE}
+	NSutils::RegMultiSzDelete "HKCU\Software\MyCompany" "MyValue" 0 "xxx" ${TRUE}
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "xxx" ) = $0'
@@ -580,16 +489,7 @@ Section /o "Test REG_BINARY operations"
 	!define STRING "abc"
 	!define OFFSET 10
 	!define FLAGS 0
-!ifdef DEBUGGING_ENABLED
-	Push "${STRING}"
-	Push ${OFFSET}
-	Push ${FLAGS}
-	Push "${REGVAL}"
-	Push "HKCU\${REGKEY}"
-	CallInstDLL "${NSUTILS}" RegBinaryInsertString
-!else
 	NSutils::RegBinaryInsertString "HKCU\${REGKEY}" "${REGVAL}" ${FLAGS} ${OFFSET} "${STRING}"
-!endif
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} "  RegBinaryInsertString( HKCU\${REGKEY}[${REGVAL}], ${OFFSET}, ${STRING} ) == $0"
@@ -601,16 +501,7 @@ Section /o "Test REG_BINARY operations"
 	!define STRING "abcdef"
 	!define OFFSET 10
 	!define FLAGS 0
-!ifdef DEBUGGING_ENABLED
-	Push "${STRING}"
-	Push ${OFFSET}
-	Push ${FLAGS}
-	Push "${REGVAL}"
-	Push "HKCU\${REGKEY}"
-	CallInstDLL "${NSUTILS}" RegBinaryInsertString
-!else
 	NSutils::RegBinaryInsertString "HKCU\${REGKEY}" "${REGVAL}" ${FLAGS} ${OFFSET} "${STRING}"
-!endif
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} "  RegBinaryInsertString( HKCU\${REGKEY}[${REGVAL}], ${OFFSET}, ${STRING} ) == $0"
@@ -622,16 +513,7 @@ Section /o "Test REG_BINARY operations"
 	!define STRING "XY"
 	!define OFFSET 14
 	!define FLAGS 0
-!ifdef DEBUGGING_ENABLED
-	Push "${STRING}"
-	Push ${OFFSET}
-	Push ${FLAGS}
-	Push "${REGVAL}"
-	Push "HKCU\${REGKEY}"
-	CallInstDLL "${NSUTILS}" RegBinaryInsertString
-!else
 	NSutils::RegBinaryInsertString "HKCU\${REGKEY}" "${REGVAL}" ${FLAGS} ${OFFSET} "${STRING}"
-!endif
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} "  RegBinaryInsertString( HKCU\${REGKEY}[${REGVAL}], ${OFFSET}, ${STRING} ) == $0"
@@ -656,33 +538,15 @@ Section /o "Test compare files"
 	${Print} "--------------------------------------------------------------"
 	${Print} "Test compare files"
 
-!ifdef DEBUGGING_ENABLED
-	Push "C:\Windows\inf\setupapi.setup.log"
-	Push "C:\Windows\inf\setupapi.dev.log"
-	CallInstDLL "${NSUTILS}" CompareFiles
-!else
-	NSutils::CompareFiles /NOUNLOAD "C:\Windows\inf\setupapi.dev.log" "C:\Windows\inf\setupapi.setup.log"
-!endif
+	NSutils::CompareFiles "C:\Windows\inf\setupapi.dev.log" "C:\Windows\inf\setupapi.setup.log"
 	Pop $0
 	${Print} "  CompareFiles ( setupapi.dev.log, setupapi.setup.log ) == (BOOL)$0"
 
-!ifdef DEBUGGING_ENABLED
-	Push "C:\Windows\inf\setupapi.dev.log"
-	Push "C:\Windows\inf\setupapi.dev.log"
-	CallInstDLL "${NSUTILS}" CompareFiles
-!else
-	NSutils::CompareFiles /NOUNLOAD "C:\Windows\inf\setupapi.dev.log" "C:\Windows\inf\setupapi.dev.log"
-!endif
+	NSutils::CompareFiles "C:\Windows\inf\setupapi.dev.log" "C:\Windows\inf\setupapi.dev.log"
 	Pop $0
 	${Print} "  CompareFiles ( setupapi.dev.log, setupapi.dev.log ) == (BOOL)$0"
 
-!ifdef DEBUGGING_ENABLED
-	Push "C:\Windows\inf\setupapi.invalid.log"
-	Push "C:\Windows\inf\setupapi.dev.log"
-	CallInstDLL "${NSUTILS}" CompareFiles
-!else
-	NSutils::CompareFiles /NOUNLOAD "C:\Windows\inf\setupapi.dev.log" "C:\Windows\inf\setupapi.invalid.log"
-!endif
+	NSutils::CompareFiles "C:\Windows\inf\setupapi.dev.log" "C:\Windows\inf\setupapi.invalid.log"
 	Pop $0
 	${Print} "  CompareFiles ( setupapi.dev.log, setupapi.invalid.log ) == (BOOL)$0"
 SectionEnd
@@ -696,12 +560,7 @@ Section /o "Test SSD"
 	${For} $R0 0 25
 		StrCpy $R1 $9 1 $R0
 
-!ifdef DEBUGGING_ENABLED
-		Push "$R1:"
-		CallInstDLL "${NSUTILS}" DriveIsSSD
-!else
-		NSutils::DriveIsSSD /NOUNLOAD "$R1:"
-!endif
+		NSutils::DriveIsSSD "$R1:"
 		Pop $0
 		${Print} "  DriveIsSSD ( $R1: ) == (BOOL)$0"
 
@@ -734,7 +593,7 @@ Section /o "CPUID"
 	!define MASK_3DNOWX	0x40000000		; EDX81
 	!define MASK_LM		0x20000000		; EDX81
 
-	NSutils::CPUID /NOUNLOAD 1
+	NSutils::CPUID 1
 	Pop $1	; EAX
 	Pop $2	; EBX
 	Pop $3	; ECX
@@ -748,7 +607,7 @@ Section /o "CPUID"
 	!insertmacro CPUID_PRINT_FEATURE "SSE4.1" $3 ${MASK_SSE41}
 	!insertmacro CPUID_PRINT_FEATURE "SSE4.2" $3 ${MASK_SSE42}
 
-	NSutils::CPUID /NOUNLOAD 0x80000001
+	NSutils::CPUID 0x80000001
 	Pop $1	; EAX
 	Pop $2	; EBX
 	Pop $3	; ECX
@@ -758,10 +617,4 @@ Section /o "CPUID"
 	!insertmacro CPUID_PRINT_FEATURE "Extended 3DNow!" $4 ${MASK_3DNOWX}
 	!insertmacro CPUID_PRINT_FEATURE "64BIT" $4 ${MASK_LM}
 
-SectionEnd
-
-
-Section "-Cleanup"
-	; Make sure NSutils is not loaded (in case all previous calls were made with /NOUNLOAD)
-	NSutils::DisableProgressStepBack 0	; Dummy call. No effect.
 SectionEnd

@@ -5,7 +5,7 @@ echo.
 
 cd /d "%~dp0"
 
-del "%~dp0\Test\*.exe"
+call "%~dp0\Test\cleanup.bat"
 call :CLEANUP
 call :CLEANUP
 call :CLEANUP
