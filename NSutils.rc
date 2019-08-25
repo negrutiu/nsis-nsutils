@@ -50,7 +50,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,2019,1,24
+ FILEVERSION 1,2019,8,25
  PRODUCTVERSION 1,0,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -68,9 +68,10 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Marius Negrutiu (marius.negrutiu@protonmail.com)"
             VALUE "FileDescription", "NSIS Utility Routines"
-            VALUE "FileVersion", "1.2019.1.24"
+            VALUE "FileVersion", "1.2019.8.25"
             VALUE "InternalName", "NSutils.dll"
             VALUE "LegalCopyright", "(C)2015-2019, Marius Negrutiu. All rights reserved."
+            VALUE "LegalTrademarks", "https://github.com/negrutiu/nsis-nsutils"
             VALUE "OriginalFilename", "NSutils.dll"
             VALUE "ProductName", "NSIS utility routines"
             VALUE "ProductVersion", "1.0.0.0"
