@@ -13,6 +13,7 @@ extern VOID UtilsUnload();
 extra_parameters *g_ep = NULL;
 HWND g_hwndparent = NULL;
 
+
 //++ DllMain
 BOOL WINAPI DllMain(
 	HINSTANCE hInst,
@@ -30,6 +31,25 @@ BOOL WINAPI DllMain(
 	}
 	return TRUE;
 }
+
+
+//+ PluginCallback
+UINT_PTR __cdecl PluginCallback( enum NSPIM iMessage )
+{
+	switch ( iMessage )
+	{
+		case NSPIM_UNLOAD:
+			DebugString( _T( "NSPIM_UNLOAD\n" ) );
+			//x UtilsUnload();	// DLL_PROCESS_DETACH will handle this
+			break;
+
+		case NSPIM_GUIUNLOAD:
+			DebugString( _T( "NSPIM_GUIUNLOAD\n" ) );
+			break;
+	}
+	return 0;
+}
+
 
 //+ DebugString
 #if _DEBUG || DBG

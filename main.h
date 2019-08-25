@@ -22,8 +22,9 @@
 	if (g_ep && g_ep->exec_flags && (g_ep->exec_flags->plugin_api_version != NSISPIAPIVER_CURR))  \
 		return;
 
-extern extra_parameters *g_ep;		/// main.c
-extern HWND g_hwndparent;			/// main.c
+extern extra_parameters	*g_ep;			/// main.c
+extern HWND				g_hwndparent;	/// main.c
+UINT_PTR __cdecl		PluginCallback( enum NSPIM iMessage );
 // <-- NSIS plugin API
 
 #if _DEBUG || DBG

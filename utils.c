@@ -785,7 +785,6 @@ LRESULT CALLBACK ProgressBarWndProc(
 //    None
 //+ Example:
 //    NSutils::DisableProgressStepBack /NOUNLOAD $mui.InstFilesPage.ProgressBar
-//    /NOUNLOAD is mandatory for obvious reasons...
 
 void __declspec(dllexport) DisableProgressStepBack(
 	HWND parent,
@@ -800,6 +799,10 @@ void __declspec(dllexport) DisableProgressStepBack(
 	//	Cache global structures
 	EXDLL_INIT();
 	EXDLL_VALIDATE();
+
+	// By registering PluginCallback the plugin remains locked in memory
+	// Otherwise the framework would unload it when this call returns... Unless the caller specifies /NOUNLOAD...
+	extra->RegisterPluginCallback( g_hModule, PluginCallback );
 
 	//	Retrieve NSIS parameters
 	///	Param1: Progress bar handle
@@ -873,6 +876,10 @@ void __declspec(dllexport) RedirectProgressBar(
 	//	Cache global structures
 	EXDLL_INIT();
 	EXDLL_VALIDATE();
+
+	// By registering PluginCallback the plugin remains locked in memory
+	// Otherwise the framework would unload it when this call returns... Unless the caller specifies /NOUNLOAD...
+	extra->RegisterPluginCallback( g_hModule, PluginCallback );
 
 	//	Retrieve NSIS parameters
 
@@ -1010,6 +1017,10 @@ void __declspec(dllexport) StartTimer(
 	EXDLL_INIT();
 	EXDLL_VALIDATE();
 
+	// By registering PluginCallback the plugin remains locked in memory
+	// Otherwise the framework would unload it when this call returns... Unless the caller specifies /NOUNLOAD...
+	extra->RegisterPluginCallback( g_hModule, PluginCallback );
+
 	//	Retrieve NSIS parameters
 
 	///	Param1: Callback function
@@ -1133,6 +1144,10 @@ void __declspec(dllexport) StartReceivingClicks(
 	//	Cache global structures
 	EXDLL_INIT();
 	EXDLL_VALIDATE();
+
+	// By registering PluginCallback the plugin remains locked in memory
+	// Otherwise the framework would unload it when this call returns... Unless the caller specifies /NOUNLOAD...
+	extra->RegisterPluginCallback( g_hModule, PluginCallback );
 
 	//	Retrieve NSIS parameters
 
@@ -1266,6 +1281,10 @@ void __declspec(dllexport) RejectCloseMessages(
 	// Cache global structures
 	EXDLL_INIT();
 	EXDLL_VALIDATE();
+
+	// By registering PluginCallback the plugin remains locked in memory
+	// Otherwise the framework would unload it when this call returns... Unless the caller specifies /NOUNLOAD...
+	extra->RegisterPluginCallback( g_hModule, PluginCallback );
 
 	//	Retrieve NSIS parameters
 	/// Allocate memory large enough to store any NSIS string
