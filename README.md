@@ -1,9 +1,8 @@
-# NSutils ([NSIS](https://nsis.sourceforge.io/Main_Page) plugin)
-NSutils has multiple functions packed in one plugin<br>
-The plugin is included in my **unofficial** [NSIS builds](https://github.com/negrutiu/nsis)
-
-### Features
+# NSutils ([NSIS](https://github.com/negrutiu/nsis) plugin)
+NSutils has multiple functions packed in one plugin
 Check out the [readme file](NSutils.Readme.txt) for additional details and usage samples!
+
+### Functions:
 
 Function|Details
 -|-
