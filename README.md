@@ -1,6 +1,6 @@
 # NSutils ([NSIS](https://github.com/negrutiu/nsis) plugin)
-NSutils has multiple functions packed in one plugin
-Check out the [readme file](NSutils.Readme.txt) for additional details and usage samples!
+NSutils has multiple functions packed in one plugin<br>
+Check out the [readme file](NSutils.Readme.txt) for additional details and usage samples
 
 ### Functions:
 
