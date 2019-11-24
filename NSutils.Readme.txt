@@ -1,7 +1,8 @@
 _______________________________________________________________________________
 
 Functions exported by NSutils
-[marius.negrutiu@protonmail.com]
+https://github.com/negrutiu/nsis-nsutils
+marius.negrutiu@protonmail.com
 _______________________________________________________________________________
 
 [GetVersionInfoString]
