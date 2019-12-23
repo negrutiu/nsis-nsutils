@@ -1,11 +1,16 @@
 ﻿
 !ifdef AMD64
-	Target amd64-unicode
+	!define _TARGET_ amd64-unicode
 !else ifdef ANSI
-	Target x86-ansi
+	!define _TARGET_ x86-ansi
 !else
-	Target x86-unicode	; Default
+	!define _TARGET_ x86-unicode		; Default
 !endif
+
+Target ${_TARGET_}
+
+# /dll commandline parameter
+Var /global DLL
 
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
@@ -40,17 +45,8 @@ SpaceTexts "none"
 !insertmacro MUI_LANGUAGE "English"
 
 # Installer details
-!ifdef NSIS_AMD64
-	Name    "NSutils-Debug-amd64-unicode"
-	OutFile "NSutils-Debug-amd64-unicode.exe"
-!else ifdef NSIS_UNICODE
-	Name    "NSutils-Debug-x86-unicode"
-	OutFile "NSutils-Debug-x86-unicode.exe"
-!else
-	Name    "NSutils-Debug-x86-ansi"
-	OutFile "NSutils-Debug-x86-ansi.exe"
-!endif
-
+Name    "NSutils-Debug-${_TARGET_}"
+OutFile "NSutils-Debug-${_TARGET_}.exe"
 XPStyle on
 RequestExecutionLevel user ; don't require UAC elevation
 ManifestDPIAware true
@@ -61,6 +57,13 @@ ShowInstDetails show
 
 
 Function .onInit
+	; Command line
+	${GetParameters} $R0
+	${GetOptions} "$R0" "/dll" $DLL
+	${If} ${Errors}
+		MessageBox MB_ICONSTOP 'Syntax:$\n"$EXEFILE" /DLL <NSutils.dll>'
+		Abort
+	${EndIf}
 FunctionEnd
 
 Function PrintFileVersion
@@ -70,60 +73,60 @@ Function PrintFileVersion
 	${Print} "$R0"
 
 	Push $R0
-	CallInstDLL "${NSUTILS}" GetFileVersion
+	CallInstDLL $DLL GetFileVersion
 	Pop $0
 	${Print} "    FileVersion: $0 ($1,$2,$3,$4)"
 
 	Push $R0
-	CallInstDLL "${NSUTILS}" GetProductVersion
+	CallInstDLL $DLL GetProductVersion
 	Pop $0
 	${Print} "    ProductVersion: $0 ($1,$2,$3,$4)"
 
 	Push "CompanyName"
 	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
+	CallInstDLL $DLL GetVersionInfoString
 	Pop $0
 	${Print} "    CompanyName: $0"
 
 	Push "FileDescription"
 	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
+	CallInstDLL $DLL GetVersionInfoString
 	Pop $0
 	${Print} "    FileDescription: $0"
 
 	Push "FileVersion"
 	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
+	CallInstDLL $DLL GetVersionInfoString
 	Pop $0
 	${Print} "    FileVersion: $0"
 
 	Push "InternalName"
 	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
+	CallInstDLL $DLL GetVersionInfoString
 	Pop $0
 	${Print} "    InternalName: $0"
 
 	Push "LegalCopyright"
 	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
+	CallInstDLL $DLL GetVersionInfoString
 	Pop $0
 	${Print} "    LegalCopyright: $0"
 
 	Push "OriginalFilename"
 	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
+	CallInstDLL $DLL GetVersionInfoString
 	Pop $0
 	${Print} "    OriginalFilename: $0"
 
 	Push "ProductName"
 	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
+	CallInstDLL $DLL GetVersionInfoString
 	Pop $0
 	${Print} "    ProductName: $0"
 
 	Push "ProductVersion"
 	Push $R0
-	CallInstDLL "${NSUTILS}" GetVersionInfoString
+	CallInstDLL $DLL GetVersionInfoString
 	Pop $0
 	${Print} "    ProductVersion: $0"
 
@@ -184,7 +187,7 @@ SectionEnd
 Section /o "Test progress bar (fixed, no stepping back)"
 
 	Push $mui.InstFilesPage.ProgressBar
-	CallInstDLL "${NSUTILS}" DisableProgressStepBack
+	CallInstDLL $DLL DisableProgressStepBack
 	${Print} "--------------------------------------------------------------"
 	${Print} "Looping with DisableProgressStepBack..."
 	${For} $R0 1 10
@@ -210,7 +213,7 @@ Section /o "Test progress bar (fixed, no stepping back)"
 		Sleep 10
 	${Next}
 	Push $mui.InstFilesPage.ProgressBar
-	CallInstDLL "${NSUTILS}" RestoreProgressStepBack
+	CallInstDLL $DLL RestoreProgressStepBack
 
 SectionEnd
 
@@ -228,7 +231,7 @@ Section /o "Test PendingFileRenameOperations (requires Admin)"
 
 	Push "$EXEDIR\PendingFileRename.log"
 	Push "MyNotepad"
-	CallInstDLL "${NSUTILS}" ExecutePendingFileRenameOperations
+	CallInstDLL $DLL ExecutePendingFileRenameOperations
 	Pop $0	; Win32 error code
 	Pop $1	; Win32 error code of the first failed operation
 
@@ -253,14 +256,14 @@ Section /o "Test FindFileRenameOperations"
 
 	StrCpy $R0 "temp"	; Substring to find
 	Push $R0
-	CallInstDLL "${NSUTILS}" FindPendingFileRenameOperations
+	CallInstDLL $DLL FindPendingFileRenameOperations
 	Pop $0
 	${Print} 'FindPendingFileRenameOperations( "$R0" ) == "$0"'
 
 
 	StrCpy $R0 "*"		; Substring to find
 	Push $R0
-	CallInstDLL "${NSUTILS}" FindPendingFileRenameOperations
+	CallInstDLL $DLL FindPendingFileRenameOperations
 	Pop $0
 	${Print} 'FindPendingFileRenameOperations( "$R0" ) == "$0"'
 
@@ -277,7 +280,7 @@ Section /o "Test string table manipulation"
 	Push 1033
 	Push 100
 	Push "$DESKTOP\MyUser32.dll"
-	CallInstDLL "${NSUTILS}" ReadResourceString
+	CallInstDLL $DLL ReadResourceString
 	Pop $0
 	${If} $0 == ""
 		${Print} 'String #10: "$0". Ok!'
@@ -289,7 +292,7 @@ Section /o "Test string table manipulation"
 	Push 1033
 	Push 100
 	Push "$DESKTOP\MyTest.exe"
-	CallInstDLL "${NSUTILS}" WriteResourceString
+	CallInstDLL $DLL WriteResourceString
 	Pop $0
 	${If} $0 = ${FALSE}
 		StrCpy $0 "ERROR"
@@ -301,7 +304,7 @@ Section /o "Test string table manipulation"
 	Push 1033
 	Push 100
 	Push "$DESKTOP\MyTest.exe"
-	CallInstDLL "${NSUTILS}" ReadResourceString
+	CallInstDLL $DLL ReadResourceString
 	Pop $0
 	${If} $0 != ""
 		${Print} 'String #100: "$0". Ok!'
@@ -313,7 +316,7 @@ Section /o "Test string table manipulation"
 	Push 1033
 	Push 100
 	Push "$DESKTOP\MyTest.exe"
-	CallInstDLL "${NSUTILS}" WriteResourceString
+	CallInstDLL $DLL WriteResourceString
 	Pop $0
 	${If} $0 = ${FALSE}
 		StrCpy $0 "ERROR"
@@ -325,7 +328,7 @@ Section /o "Test string table manipulation"
 	Push 1033
 	Push 100
 	Push "$DESKTOP\MyTest.exe"
-	CallInstDLL "${NSUTILS}" ReadResourceString
+	CallInstDLL $DLL ReadResourceString
 	Pop $0
 	${If} $0 == ""
 		${Print} 'String #10: "$0". Ok!'
@@ -374,7 +377,7 @@ Section /o "Test close file handles"
 
 	${Print} 'Close TESTFILE file handles'
 	Push "${TESTFILE}"
-	CallInstDLL "${NSUTILS}" CloseFileHandles
+	CallInstDLL $DLL CloseFileHandles
 	Pop $0
 	${Print} '  $0 handles closed'
 
@@ -428,7 +431,7 @@ Section /o "Test REG_MULTI_SZ operations"
 	Push 0
 	Push "MyValue"
 	Push "HKCU\Software\MyCompany"
-	CallInstDLL "${NSUTILS}" RegMultiSzInsertAfter
+	CallInstDLL $DLL RegMultiSzInsertAfter
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzInsert( "ccc" after "" ) = $0'
@@ -438,7 +441,7 @@ Section /o "Test REG_MULTI_SZ operations"
 	Push 0
 	Push "MyValue"
 	Push "HKCU\Software\MyCompany"
-	CallInstDLL "${NSUTILS}" RegMultiSzInsertBefore
+	CallInstDLL $DLL RegMultiSzInsertBefore
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzInsert( "bbb" before "ccc" ) = $0'
@@ -448,7 +451,7 @@ Section /o "Test REG_MULTI_SZ operations"
 	Push 0
 	Push "MyValue"
 	Push "HKCU\Software\MyCompany"
-	CallInstDLL "${NSUTILS}" RegMultiSzInsertAfter
+	CallInstDLL $DLL RegMultiSzInsertAfter
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzInsert( "ddd" after "ccc" ) = $0'
@@ -458,7 +461,7 @@ Section /o "Test REG_MULTI_SZ operations"
 	Push 0
 	Push "MyValue"
 	Push "HKCU\Software\MyCompany"
-	CallInstDLL "${NSUTILS}" RegMultiSzInsertAtIndex
+	CallInstDLL $DLL RegMultiSzInsertAtIndex
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzInsert( "ddd" at index 0 ) = $0'
@@ -468,7 +471,7 @@ Section /o "Test REG_MULTI_SZ operations"
 	Push 0
 	Push "MyValue"
 	Push "HKCU\Software\MyCompany"
-	CallInstDLL "${NSUTILS}" RegMultiSzInsertAtIndex
+	CallInstDLL $DLL RegMultiSzInsertAtIndex
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzInsert( "eee" at index 4 ) = $0'
@@ -479,7 +482,7 @@ Section /o "Test REG_MULTI_SZ operations"
 		Push 0
 		Push "MyValue"
 		Push "HKCU\Software\MyCompany"
-		CallInstDLL "${NSUTILS}" RegMultiSzRead
+		CallInstDLL $DLL RegMultiSzRead
 		Pop $0	; Win32 error
 		Pop $2	; The substring
 		IntFmt $0 "0x%x" $0
@@ -518,7 +521,7 @@ Section /o "Test REG_MULTI_SZ operations"
 	Push 0
 	Push "MyValue"
 	Push "HKCU\Software\MyCompany"
-	CallInstDLL "${NSUTILS}" RegMultiSzDelete
+	CallInstDLL $DLL RegMultiSzDelete
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "ccc" ) = $0'
@@ -528,7 +531,7 @@ Section /o "Test REG_MULTI_SZ operations"
 	Push 0
 	Push "MyValue"
 	Push "HKCU\Software\MyCompany"
-	CallInstDLL "${NSUTILS}" RegMultiSzDelete
+	CallInstDLL $DLL RegMultiSzDelete
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "bbb" ) = $0'
@@ -538,7 +541,7 @@ Section /o "Test REG_MULTI_SZ operations"
 	Push 0
 	Push "MyValue"
 	Push "HKCU\Software\MyCompany"
-	CallInstDLL "${NSUTILS}" RegMultiSzDelete
+	CallInstDLL $DLL RegMultiSzDelete
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "aaa" ) = $0'
@@ -548,7 +551,7 @@ Section /o "Test REG_MULTI_SZ operations"
 	Push 0
 	Push "MyValue"
 	Push "HKCU\Software\MyCompany"
-	CallInstDLL "${NSUTILS}" RegMultiSzDelete
+	CallInstDLL $DLL RegMultiSzDelete
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "ddd" ) = $0'
@@ -558,7 +561,7 @@ Section /o "Test REG_MULTI_SZ operations"
 	Push 0
 	Push "MyValue"
 	Push "HKCU\Software\MyCompany"
-	CallInstDLL "${NSUTILS}" RegMultiSzDelete
+	CallInstDLL $DLL RegMultiSzDelete
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "eee" ) = $0'
@@ -568,7 +571,7 @@ Section /o "Test REG_MULTI_SZ operations"
 	Push 0
 	Push "MyValue"
 	Push "HKCU\Software\MyCompany"
-	CallInstDLL "${NSUTILS}" RegMultiSzDelete
+	CallInstDLL $DLL RegMultiSzDelete
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} '  RegMultiSzDelete( "xxx" ) = $0'
@@ -601,7 +604,7 @@ Section /o "Test REG_BINARY operations"
 	Push ${FLAGS}
 	Push "${REGVAL}"
 	Push "HKCU\${REGKEY}"
-	CallInstDLL "${NSUTILS}" RegBinaryInsertString
+	CallInstDLL $DLL RegBinaryInsertString
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} "  RegBinaryInsertString( HKCU\${REGKEY}[${REGVAL}], ${OFFSET}, ${STRING} ) == $0"
@@ -618,7 +621,7 @@ Section /o "Test REG_BINARY operations"
 	Push ${FLAGS}
 	Push "${REGVAL}"
 	Push "HKCU\${REGKEY}"
-	CallInstDLL "${NSUTILS}" RegBinaryInsertString
+	CallInstDLL $DLL RegBinaryInsertString
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} "  RegBinaryInsertString( HKCU\${REGKEY}[${REGVAL}], ${OFFSET}, ${STRING} ) == $0"
@@ -635,7 +638,7 @@ Section /o "Test REG_BINARY operations"
 	Push ${FLAGS}
 	Push "${REGVAL}"
 	Push "HKCU\${REGKEY}"
-	CallInstDLL "${NSUTILS}" RegBinaryInsertString
+	CallInstDLL $DLL RegBinaryInsertString
 	Pop $0
 	IntFmt $0 "0x%x" $0
 	${Print} "  RegBinaryInsertString( HKCU\${REGKEY}[${REGVAL}], ${OFFSET}, ${STRING} ) == $0"
@@ -662,19 +665,19 @@ Section /o "Test compare files"
 
 	Push "C:\Windows\inf\setupapi.setup.log"
 	Push "C:\Windows\inf\setupapi.dev.log"
-	CallInstDLL "${NSUTILS}" CompareFiles
+	CallInstDLL $DLL CompareFiles
 	Pop $0
 	${Print} "  CompareFiles ( setupapi.dev.log, setupapi.setup.log ) == (BOOL)$0"
 
 	Push "C:\Windows\inf\setupapi.dev.log"
 	Push "C:\Windows\inf\setupapi.dev.log"
-	CallInstDLL "${NSUTILS}" CompareFiles
+	CallInstDLL $DLL CompareFiles
 	Pop $0
 	${Print} "  CompareFiles ( setupapi.dev.log, setupapi.dev.log ) == (BOOL)$0"
 
 	Push "C:\Windows\inf\setupapi.invalid.log"
 	Push "C:\Windows\inf\setupapi.dev.log"
-	CallInstDLL "${NSUTILS}" CompareFiles
+	CallInstDLL $DLL CompareFiles
 	Pop $0
 	${Print} "  CompareFiles ( setupapi.dev.log, setupapi.invalid.log ) == (BOOL)$0"
 SectionEnd
@@ -689,7 +692,7 @@ Section /o "Test SSD"
 		StrCpy $R1 $9 1 $R0
 
 		Push "$R1:"
-		CallInstDLL "${NSUTILS}" DriveIsSSD
+		CallInstDLL $DLL DriveIsSSD
 		Pop $0
 		${Print} "  DriveIsSSD ( $R1: ) == (BOOL)$0"
 
@@ -723,7 +726,7 @@ Section /o "CPUID"
 	!define MASK_LM		0x20000000		; EDX81
 
 	Push 1
-	CallInstDLL "${NSUTILS}" CPUID
+	CallInstDLL $DLL CPUID
 	Pop $1	; EAX
 	Pop $2	; EBX
 	Pop $3	; ECX
@@ -738,7 +741,7 @@ Section /o "CPUID"
 	!insertmacro CPUID_PRINT_FEATURE "SSE4.2" $3 ${MASK_SSE42}
 
 	Push 0x80000001
-	CallInstDLL "${NSUTILS}" CPUID
+	CallInstDLL $DLL CPUID
 	Pop $1	; EAX
 	Pop $2	; EBX
 	Pop $3	; ECX

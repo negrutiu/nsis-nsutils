@@ -8,10 +8,7 @@ echo ERROR: NSIS not found & pause & exit /B 2
 "%NSIS_PATH%\makensis.exe" /DAMD64 /V4 "%~dp0\NSutils-Test.nsi"
 if %errorlevel% neq 0 pause & exit /B %errorlevel%
 
-"%NSIS_PATH%\makensis.exe" /DAMD64 /V4 "%~dp0\NSutils-Debug.nsi"
-if %errorlevel% neq 0 pause & exit /B %errorlevel%
-
-echo ----------------------------------------------------------
-set exe=NSutils-Test-amd64-unicode.exe
-set /P answer=Execute %exe% (y/N)? 
-if /I "%answer%" equ "y" "%~dp0\%exe%"
+REM echo ----------------------------------------------------------
+REM set exe=NSutils-Test-amd64-unicode.exe
+REM set /P answer=Execute %exe% (y/N)? 
+REM if /I "%answer%" equ "y" "%~dp0\%exe%"

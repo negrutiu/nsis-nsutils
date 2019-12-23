@@ -1,11 +1,13 @@
 ﻿
 !ifdef AMD64
-	Target amd64-unicode
+	!define _TARGET_ amd64-unicode
 !else ifdef ANSI
-	Target x86-ansi
+	!define _TARGET_ x86-ansi
 !else
-	Target x86-unicode	; Default
+	!define _TARGET_ x86-unicode		; Default
 !endif
+
+Target ${_TARGET_}
 
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
@@ -36,17 +38,8 @@ SpaceTexts "none"
 !insertmacro MUI_LANGUAGE "English"
 
 # Installer details
-!ifdef NSIS_AMD64
-	Name    "NSutils-Test-amd64-unicode"
-	OutFile "NSutils-Test-amd64-unicode.exe"
-!else ifdef NSIS_UNICODE
-	Name    "NSutils-Test-x86-unicode"
-	OutFile "NSutils-Test-x86-unicode.exe"
-!else
-	Name    "NSutils-Test-x86-ansi"
-	OutFile "NSutils-Test-x86-ansi.exe"
-!endif
-
+Name    "NSutils-Test-${_TARGET_}"
+OutFile "NSutils-Test-${_TARGET_}.exe"
 XPStyle on
 RequestExecutionLevel user ; don't require UAC elevation
 ManifestDPIAware true

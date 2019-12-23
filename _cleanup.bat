@@ -6,6 +6,7 @@ echo.
 cd /d "%~dp0"
 
 call "%~dp0\Test\cleanup.bat"
+call "%~dp0\TestDebug\cleanup.bat"
 call :CLEANUP
 call :CLEANUP
 call :CLEANUP
