@@ -175,10 +175,31 @@ DWORD ResampleBitmap(
 	DWORD err = ERROR_SUCCESS;
 	if ( hBitmap && phBitmap && (iWidth > 0) && (iHeight > 0)) {
 
+		typedef BOOL( WINAPI *TfnAlphaBlend )(
+			_In_ HDC hdcDest, _In_ int xoriginDest, _In_ int yoriginDest, _In_ int wDest, _In_ int hDest,
+			_In_ HDC hdcSrc,  _In_ int xoriginSrc,  _In_ int yoriginSrc,  _In_ int wSrc,  _In_ int hSrc,
+			_In_ BLENDFUNCTION ftn
+			);
+
+		int iSize;
+		BITMAPINFO *pBmi;
+
+		HMODULE hImg32;
+		TfnAlphaBlend fnAlphaBlend = NULL;
+		TCHAR szPath[MAX_PATH];
+
+		// msimg32!AlphaBlend
+		// NOTE: msimg32.dll is not available in NT4
+		GetSystemDirectory( szPath, ARRAYSIZE( szPath ) );
+		lstrcat( szPath, _T( "\\msimg32.dll" ) );
+		hImg32 = LoadLibrary( szPath );
+		if (hImg32)
+			fnAlphaBlend = (TfnAlphaBlend)GetProcAddress( hImg32, "AlphaBlend" );
+
 		// Create a device independent bitmap
-		int iSize = sizeof(BITMAPINFOHEADER) + 32 * iWidth * iHeight;
-		BITMAPINFO *pBmi = (BITMAPINFO*)GlobalAlloc( GPTR, iSize );
-		if ( pBmi ) {
+		iSize = sizeof(BITMAPINFOHEADER) + 32 * iWidth * iHeight;
+		pBmi = (BITMAPINFO*)GlobalAlloc( GPTR, iSize );
+		if (pBmi) {
 
 			pBmi->bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
 			pBmi->bmiHeader.biWidth = iWidth;
@@ -224,14 +245,14 @@ DWORD ResampleBitmap(
 					BOOL bHasAlphaChannel = FALSE;
 
 					bHasAlphaChannel = PrepareBitmapForAlphaBlend( hBitmap );
-					if ( bHasAlphaChannel ) {
+					if (bHasAlphaChannel && fnAlphaBlend) {
 
 						BLENDFUNCTION bf = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
 						RECT rc = { 0, 0, iWidth, iHeight };
 
 						// White-fill the destination, and paint the (transparent) bitmap over it
 						FillRect( hDstDC, &rc, (HBRUSH)GetStockObject( WHITE_BRUSH ));
-						AlphaBlend( hDstDC, x, y, iSrcWidth, iSrcHeight, hSrcDC, 0, 0, iSrcWidth, iSrcHeight, bf );
+						fnAlphaBlend( hDstDC, x, y, iSrcWidth, iSrcHeight, hSrcDC, 0, 0, iSrcWidth, iSrcHeight, bf );
 
 					} else {
 
@@ -279,6 +300,9 @@ DWORD ResampleBitmap(
 		} else {
 			err = GetLastError();		/// GlobalAlloc
 		}
+
+		if (hImg32)
+			FreeLibrary( hImg32 );
 
 	} else {
 		err = ERROR_INVALID_PARAMETER;

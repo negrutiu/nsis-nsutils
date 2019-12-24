@@ -17,7 +17,7 @@ PROJECT  = NSutils
 BIN      = $(PROJECT).dll
 OBJ      = pluginapi.o gdi.o main.o registry.o strblock.o utils.o handles.o verinfo.o NSutils.res
 INC      = -I.
-LIB      = -lkernel32 -luser32 -ladvapi32 -lshlwapi -lgdi32 -lole32 -loleaut32 -lmsimg32 -luuid -lversion
+LIB      = -lkernel32 -luser32 -ladvapi32 -lgdi32 -lole32 -loleaut32 -luuid -lversion
 SAL      = -D__in= -D__out= -D__inout= -D__in_opt= -D__out_opt= \
            -D_In_= -D_Out_= -D_Inout_= -D_In_opt_= -D_Out_opt_=
 

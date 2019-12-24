@@ -3,7 +3,6 @@
 
 #include "main.h"
 #include <CommCtrl.h>
-#include <Shlwapi.h>
 #include <intrin.h>
 
 
@@ -98,7 +97,7 @@ HANDLE LogCreateFile(
 
 			LARGE_INTEGER iFileSize;
 			if ( bOverwrite ||
-				 (GetFileSizeEx( hFile, &iFileSize ) && ( iFileSize.QuadPart == 0 )))
+				 ((iFileSize.LowPart = GetFileSize( hFile, &iFileSize.HighPart ) != INVALID_FILE_SIZE) && ( iFileSize.QuadPart == 0 )))
 			{
 				/// New file
 #ifdef _UNICODE
@@ -356,11 +355,11 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 
 								LPCTSTR pszSrcFile = pszValue + iIndexSrcFile;
 								if ( *pszSrcFile &&
-									( !pszSrcFileSubstr || !*pszSrcFileSubstr || StrStrI( pszSrcFile, pszSrcFileSubstr ))
+									( !pszSrcFileSubstr || !*pszSrcFileSubstr || MyStrFind( pszSrcFile, pszSrcFileSubstr, FALSE ))
 									)
 								{
 									/// Ignore "\??\" prefix
-									if ( StrCmpN( pszSrcFile, _T("\\??\\"), 4 ) == 0 )
+									if ( CompareString( CP_ACP, NORM_IGNORECASE, pszSrcFile, 4, _T("\\??\\"), 4 ) == CSTR_EQUAL )
 										pszSrcFile += 4;
 
 									/// Disable file system redirection (Vista+)
@@ -394,7 +393,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 										LPCTSTR pszDstFile = pszValue + iIndexDstFile;
 										if ( *pszDstFile == _T('!'))
 											pszDstFile++;
-										if ( StrCmpN( pszDstFile, _T("\\??\\"), 4 ) == 0 )
+										if ( CompareString( CP_ACP, NORM_IGNORECASE, pszDstFile, 4, _T("\\??\\"), 4 ) == CSTR_EQUAL )
 											pszDstFile += 4;
 
 										// Rename SrcFile -> DstFile
@@ -589,12 +588,12 @@ DWORD FindPendingFileRenameOperationsImpl(
 								iIndexSrcFile = i + 1;
 
 								/*/// Ignore "\??\" prefix
-								if ( StrCmpN( pszSrcFile, _T("\\??\\"), 4 ) == 0 )
+								if ( CompareString( CP_ACP, NORM_IGNORECASE, pszSrcFile, 4, _T("\\??\\"), 4 ) == CSTR_EQUAL )
 									pszSrcFile += 4;*/
 
 								if ( !pszValue[iIndexDstFile] ) {
 
-									if ( StrStrI( pszSrcFile, pszFileSubstr ) != NULL ) {
+									if ( MyStrFind( pszSrcFile, pszFileSubstr, FALSE )) {
 										lstrcpyn( pszFirstFile, pszSrcFile, iFirstFileLen );
 										err = ERROR_SUCCESS;
 										break;
@@ -612,15 +611,15 @@ DWORD FindPendingFileRenameOperationsImpl(
 									LPCTSTR pszDstFile = pszValue + iIndexDstFile;
 									if ( *pszDstFile == _T('!'))
 										pszDstFile++;
-									/*if ( StrCmpN( pszDstFile, _T("\\??\\"), 4 ) == 0 )
+									/*if ( CompareString( CP_ACP, NORM_IGNORECASE, pszDstFile, 4, _T("\\??\\"), 4 ) == CSTR_EQUAL )
 										pszDstFile += 4;*/
 
-									if ( StrStrI( pszSrcFile, pszFileSubstr ) != NULL ) {
+									if ( MyStrFind( pszSrcFile, pszFileSubstr, FALSE )) {
 										lstrcpyn( pszFirstFile, pszSrcFile, iFirstFileLen );
 										err = ERROR_SUCCESS;
 										break;
 									}
-									if ( StrStrI( pszDstFile, pszFileSubstr ) != NULL ) {
+									if ( MyStrFind( pszDstFile, pszFileSubstr, FALSE )) {
 										lstrcpyn( pszFirstFile, pszDstFile, iFirstFileLen );
 										err = ERROR_SUCCESS;
 										break;
@@ -1526,7 +1525,7 @@ HRESULT RemoveSoftwareRestrictionPoliciesImpl(
 						if (RegEnumKeyEx(hKey1, i, szSubkey1, &dwSubkey1Len, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
 							HKEY hKey2;
 							LogWriteFile(hLogFile, _T("\t[+] %s\r\n"), szSubkey1);
-							StrCat(szSubkey1, _T("\\Paths"));
+							lstrcat(szSubkey1, _T("\\Paths"));
 							if (RegOpenKeyEx(hKey1, szSubkey1, 0, iOpenKeyFlags, &hKey2) == ERROR_SUCCESS) {
 								ULONG j;
 								for (j = 0; TRUE; ) {
@@ -1544,7 +1543,7 @@ HRESULT RemoveSoftwareRestrictionPoliciesImpl(
 												dwSize /= sizeof(TCHAR);
 												szValue[dwSize] = 0;
 												LogWriteFile(hLogFile, _T("\t\t\t%s\r\n"), szValue);
-												if (StrStrI( szValue, pszPathSubstring )) {
+												if (MyStrFind( szValue, pszPathSubstring, FALSE )) {
 													bRemoveMe = TRUE;
 												} else {
 													j++;

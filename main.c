@@ -51,6 +51,23 @@ UINT_PTR __cdecl PluginCallback( enum NSPIM iMessage )
 }
 
 
+//+ MyStrFind
+/// Finds the first occurrence of a substring in a string
+/// E.g. MyStrFind( L"aaabbbcccbbb", L"bbb" ) returns pointer to L"bbbcccbbb"
+/// If no match is found, NULL is returned
+LPCTSTR MyStrFind( _In_ LPCTSTR pszStr, _In_ LPCTSTR pszSubstr, _In_ BOOL bMatchCase )
+{
+	LPCTSTR psz;
+	if ( pszStr && *pszStr && pszSubstr && *pszSubstr ) {
+		int iSubstrLen = lstrlen( pszSubstr );
+		for (psz = pszStr; *psz; psz++)
+			if (CompareString( LOCALE_USER_DEFAULT, (bMatchCase ? 0 : NORM_IGNORECASE), psz, (int)iSubstrLen, pszSubstr, (int)iSubstrLen ) == CSTR_EQUAL)
+				return psz;
+	}
+	return NULL;
+}
+
+
 //+ DebugString
 #if _DEBUG || DBG
 VOID DebugString( _In_ LPCTSTR pszFormat, _In_opt_ ... )

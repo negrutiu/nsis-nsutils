@@ -27,6 +27,10 @@ extern HWND				g_hwndparent;	/// main.c
 UINT_PTR __cdecl		PluginCallback( enum NSPIM iMessage );
 // <-- NSIS plugin API
 
+//+ MyStrFind
+LPCTSTR MyStrFind( _In_ LPCTSTR pszStr, _In_ LPCTSTR pszSubstr, _In_ BOOL bMatchCase );
+
+//+ DebugString
 #if _DEBUG || DBG
 	VOID DebugString( _In_ LPCTSTR pszFormat, _In_opt_ ... );
 #else

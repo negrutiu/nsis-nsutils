@@ -18,11 +18,9 @@ libs = Split("""
 	kernel32
 	user32
 	advapi32
-	shlwapi
 	gdi32
 	ole32
 	oleaut32
-	msimg32
 	uuid
 	version
 """)
