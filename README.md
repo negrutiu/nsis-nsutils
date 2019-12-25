@@ -1,6 +1,12 @@
 # NSutils ([NSIS](https://github.com/negrutiu/nsis) plugin)
 NSutils has multiple functions packed in one plugin<br>
-Check out the [readme file](NSutils.Readme.txt) for additional details and usage samples
+Check out the [readme file](NSutils.Readme.txt) for additional details and usage examples<br>
+This plugin is known to work well on NT4, Win10 and everything in between...
+
+[![License: zlib/libpng](https://img.shields.io/badge/License-zlib%2Flibpng-blue.svg)](LICENSE)
+[![Latest Release](https://img.shields.io/badge/dynamic/json.svg?label=Latest%20Release&url=https%3A%2F%2Fapi.github.com%2Frepos%2Fnegrutiu%2Fnsis-nsutils%2Freleases%2Flatest&query=%24.name&colorB=orange)](../../releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/negrutiu/nsis-nsutils/total.svg?label=Downloads&colorB=orange)](../../releases/latest)
+[![GitHub issues](https://img.shields.io/github/issues/negrutiu/nsis-nsutils.svg?label=Issues)](../../issues)
 
 ### Functions:
 
