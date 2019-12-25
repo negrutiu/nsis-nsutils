@@ -56,7 +56,7 @@ endif
 
 CFLAGS  += \
 	-mdll \
-	-nostdlib \
+	-static-libgcc \
 	-s \
 	-Os \
 	-fPIE \
@@ -69,15 +69,7 @@ CFLAGS  += \
 	$(CUSTOM_CFLAGS)
 
 LDFLAGS += \
-	-mdll \
-	-nostdlib \
-	-s \
-	-Os \
-	-fPIE \
-	-ffunction-sections \
-	-fdata-sections \
-	-fno-unwind-tables \
-	-fno-asynchronous-unwind-tables \
+	$(CFLAGS) \
 	-Wl,--gc-sections \
 	-Wl,--no-seh \
 	-Wl,--nxcompat \

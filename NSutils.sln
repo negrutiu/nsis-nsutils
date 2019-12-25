@@ -9,24 +9,18 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug-x86-ansi|Win32 = Debug-x86-ansi|Win32
 		Debug-x86-unicode|Win32 = Debug-x86-unicode|Win32
-		Release-nocrt-x86-ansi|Win32 = Release-nocrt-x86-ansi|Win32
-		Release-nocrt-x86-unicode|Win32 = Release-nocrt-x86-unicode|Win32
-		Release-staticcrt-x86-ansi|Win32 = Release-staticcrt-x86-ansi|Win32
-		Release-staticcrt-x86-unicode|Win32 = Release-staticcrt-x86-unicode|Win32
+		Release-x86-ansi|Win32 = Release-x86-ansi|Win32
+		Release-x86-unicode|Win32 = Release-x86-unicode|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{FA391322-C61F-4CC4-A421-43210C3D5342}.Debug-x86-ansi|Win32.ActiveCfg = Debug-x86-ansi|Win32
 		{FA391322-C61F-4CC4-A421-43210C3D5342}.Debug-x86-ansi|Win32.Build.0 = Debug-x86-ansi|Win32
 		{FA391322-C61F-4CC4-A421-43210C3D5342}.Debug-x86-unicode|Win32.ActiveCfg = Debug-x86-unicode|Win32
 		{FA391322-C61F-4CC4-A421-43210C3D5342}.Debug-x86-unicode|Win32.Build.0 = Debug-x86-unicode|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-nocrt-x86-ansi|Win32.ActiveCfg = Release-nocrt-x86-ansi|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-nocrt-x86-ansi|Win32.Build.0 = Release-nocrt-x86-ansi|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-nocrt-x86-unicode|Win32.ActiveCfg = Release-nocrt-x86-unicode|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-nocrt-x86-unicode|Win32.Build.0 = Release-nocrt-x86-unicode|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-staticcrt-x86-ansi|Win32.ActiveCfg = Release-staticcrt-x86-ansi|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-staticcrt-x86-ansi|Win32.Build.0 = Release-staticcrt-x86-ansi|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-staticcrt-x86-unicode|Win32.ActiveCfg = Release-staticcrt-x86-unicode|Win32
-		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-staticcrt-x86-unicode|Win32.Build.0 = Release-staticcrt-x86-unicode|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-x86-ansi|Win32.ActiveCfg = Release-x86-ansi|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-x86-ansi|Win32.Build.0 = Release-x86-ansi|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-x86-unicode|Win32.ActiveCfg = Release-x86-unicode|Win32
+		{FA391322-C61F-4CC4-A421-43210C3D5342}.Release-x86-unicode|Win32.Build.0 = Release-x86-unicode|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

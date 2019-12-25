@@ -5,9 +5,12 @@
 #ifndef _PLATFORM_H_
 #define _PLATFORM_H_
 
+#define _CRT_SECURE_NO_WARNINGS
 #include <Windows.h>
+#include <stdio.h>
 
 // --> NSIS plugin API
+#include <nsis/nsis_tchar.h>
 #include <nsis/pluginapi.h>
 
 #undef EXDLL_INIT

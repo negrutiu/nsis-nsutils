@@ -23,7 +23,6 @@ rd /S /Q nsis
 
 del *.aps
 del *.bak
-del *.user
 del *.ncb
 del /AH *.suo
 del *.sdf

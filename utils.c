@@ -65,7 +65,7 @@ DWORD LogWriteFile(
 		va_list args;
 
 		va_start(args, pszFormat);
-		iLen = wvnsprintf( szStr, (int)ARRAYSIZE(szStr), pszFormat, args );
+		iLen = _vsntprintf( szStr, ARRAYSIZE(szStr), pszFormat, args );
 		if ( iLen > 0 ) {
 
 			if ( iLen < ARRAYSIZE(szStr))
@@ -379,12 +379,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 												*pdwFileOpError = err2;
 										}
 										LogWriteFile( hLogFile, _T("\tDelete( \"%s\" ) == 0x%x\r\n"), pszSrcFile, err3 );
-
-										/*{
-											TCHAR sz[512];
-											wsprintf( sz, _T("Delete( \"%s\" ) == 0x%x\n"), pszSrcFile, err3 );
-											OutputDebugString( sz );
-										}*/
+										///DebugString( _T("Delete( \"%s\" ) == 0x%x\n"), pszSrcFile, err3 );
 
 									} else {
 
@@ -406,12 +401,7 @@ DWORD ExecutePendingFileRenameOperationsImpl(
 												*pdwFileOpError = err2;
 										}
 										LogWriteFile( hLogFile, _T("\tRename( \"%s\", \"%s\" ) == 0x%x\r\n"), pszSrcFile, pszDstFile, err3 );
-
-										/*{
-											TCHAR sz[512];
-											wsprintf( sz, _T("Rename( \"%s\", \"%s\" ) == 0x%x\n"), pszSrcFile, pszDstFile, err3 );
-											OutputDebugString( sz );
-										}*/
+										///DebugString( _T("Rename( \"%s\", \"%s\" ) == 0x%x\n"), pszSrcFile, pszDstFile, err3 );
 									}
 
 									// Remove the current pended operation from memory
@@ -515,10 +505,10 @@ void __declspec(dllexport) ExecutePendingFileRenameOperations(
 		// Execute
 		err = ExecutePendingFileRenameOperationsImpl( szSubstring, &fileop_err, szLogFile );
 
-		wsprintf( pszBuf, _T("%hu"), fileop_err );
+		_sntprintf( pszBuf, string_size, _T("%hu"), fileop_err );
 		pushstring( pszBuf );
 
-		wsprintf( pszBuf, _T("%hu"), err );
+		_sntprintf( pszBuf, string_size, _T("%hu"), err );
 		pushstring( pszBuf );
 
 		/// Free memory
@@ -599,11 +589,7 @@ DWORD FindPendingFileRenameOperationsImpl(
 										break;
 									}
 
-									/*{
-										TCHAR sz[512];
-										wsprintf( sz, _T("Delete( \"%s\" )\n"), pszSrcFile );
-										OutputDebugString( sz );
-									}*/
+									///DebugString( _T("Delete( \"%s\" )\n"), pszSrcFile );
 
 								} else {
 
@@ -625,11 +611,7 @@ DWORD FindPendingFileRenameOperationsImpl(
 										break;
 									}
 
-									/*{
-										TCHAR sz[512];
-										wsprintf( sz, _T("Rename( \"%s\", \"%s\" )\n"), pszSrcFile, pszDstFile );
-										OutputDebugString( sz );
-									}*/
+									///DebugString( _T("Rename( \"%s\", \"%s\" )\n"), pszSrcFile, pszDstFile );
 								}
 
 								// Index
@@ -1642,10 +1624,10 @@ void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
 		// Execute
 		err = RemoveSoftwareRestrictionPoliciesImpl( szSubstring, KEY_READ|KEY_WRITE|KEY_WOW64_64KEY, szLogFile, &iRemovedCnt );
 
-		wsprintf( pszBuf, _T("%hu"), iRemovedCnt );
+		_sntprintf( pszBuf, string_size, _T("%hu"), iRemovedCnt );
 		pushstring( pszBuf );
 
-		wsprintf( pszBuf, _T("%hu"), err );
+		_sntprintf( pszBuf, string_size, _T("%hu"), err );
 		pushstring( pszBuf );
 
 		/// Free memory
@@ -1665,7 +1647,7 @@ BOOL IsSSD( _In_ LPCTSTR pszPath )
 		TCHAR szDisk[20];
 		HANDLE hDisk;
 
-		wsprintf( szDisk, _T( "\\\\.\\%C:" ), pszPath[0] );
+		_sntprintf( szDisk, ARRAYSIZE(szDisk), _T( "\\\\.\\%C:" ), pszPath[0] );
 		hDisk = CreateFile( szDisk, FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL );
 		if (hDisk != INVALID_HANDLE_VALUE) {
 

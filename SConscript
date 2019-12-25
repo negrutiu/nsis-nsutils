@@ -36,4 +36,5 @@ docs = Split("""
 
 Import('BuildPlugin')
 
-BuildPlugin(target, files, libs, examples, docs, res = resources)
+# NOTE: We'll set cppused = True to link to standard libs (msvcrt.dll)
+BuildPlugin(target, files, libs, examples, docs, res = resources, cppused = True)

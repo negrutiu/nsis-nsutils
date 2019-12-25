@@ -79,7 +79,7 @@ VOID DebugString( _In_ LPCTSTR pszFormat, _In_opt_ ... )
 		va_list args;
 		va_start( args, pszFormat );
 
-		wvsprintf( szStr, pszFormat, args );
+		_sntprintf( szStr, ARRAYSIZE(szStr), pszFormat, args );
 
 		va_end( args );
 

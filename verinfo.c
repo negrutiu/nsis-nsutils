@@ -126,7 +126,7 @@ DWORD ReadVersionInfoString(
 				BOOL bFound;
 
 				// Read the specified version info string
-				wsprintf( szTemp, _T( "\\StringFileInfo\\%04x%04x\\%s" ), pCodePage->wLanguage, pCodePage->wCodePage, szStringName );
+				_sntprintf( szTemp, ARRAYSIZE( szTemp ), _T( "\\StringFileInfo\\%04x%04x\\%s" ), pCodePage->wLanguage, pCodePage->wCodePage, szStringName );
 				bFound = VerQueryValue( pRes, szTemp, (LPVOID*)&szValue, &iValueLen );
 				if (!bFound) {
 
@@ -137,7 +137,7 @@ DWORD ReadVersionInfoString(
 					LPWSTR pszTranslation = NULL;
 					bFound = FindFirstStringFileInfo( &p, NULL, &pszTranslation );
 					if (bFound) {
-						wsprintf( szTemp, _T( "\\StringFileInfo\\%ws\\%s" ), pszTranslation, szStringName );
+						_sntprintf( szTemp, ARRAYSIZE( szTemp ), _T( "\\StringFileInfo\\%ws\\%s" ), pszTranslation, szStringName );
 						bFound = VerQueryValue( pRes, szTemp, (LPVOID*)&szValue, &iValueLen );
 					}
 				}
@@ -307,19 +307,19 @@ void __declspec(dllexport) GetFileVersion(
 				USHORT v3 = HIWORD( ffi.dwFileVersionLS );
 				USHORT v4 = LOWORD( ffi.dwFileVersionLS );
 
-				wsprintf( pszBuf, _T("%hu"), v1 );
+				_sntprintf( pszBuf, string_size, _T("%hu"), v1 );
 				setuservariable( INST_1, pszBuf );	/// $1 = v1
 
-				wsprintf( pszBuf, _T("%hu"), v2 );
+				_sntprintf( pszBuf, string_size, _T("%hu"), v2 );
 				setuservariable( INST_2, pszBuf );	/// $2 = v2
 
-				wsprintf( pszBuf, _T("%hu"), v3 );
+				_sntprintf( pszBuf, string_size, _T("%hu"), v3 );
 				setuservariable( INST_3, pszBuf );	/// $3 = v3
 
-				wsprintf( pszBuf, _T("%hu"), v4 );
+				_sntprintf( pszBuf, string_size, _T("%hu"), v4 );
 				setuservariable( INST_4, pszBuf );	/// $4 = v4
 
-				wsprintf( pszBuf, _T("%hu.%hu.%hu.%hu"), v1, v2, v3, v4 );
+				_sntprintf( pszBuf, string_size, _T("%hu.%hu.%hu.%hu"), v1, v2, v3, v4 );
 				pushstring( pszBuf );
 
 			} else {
@@ -379,19 +379,19 @@ void __declspec(dllexport) GetProductVersion(
 				USHORT v3 = HIWORD( ffi.dwProductVersionLS );
 				USHORT v4 = LOWORD( ffi.dwProductVersionLS );
 
-				wsprintf( pszBuf, _T("%hu"), v1 );
+				_sntprintf( pszBuf, string_size, _T("%hu"), v1 );
 				setuservariable( INST_1, pszBuf );	/// $1 = v1
 
-				wsprintf( pszBuf, _T("%hu"), v2 );
+				_sntprintf( pszBuf, string_size, _T("%hu"), v2 );
 				setuservariable( INST_2, pszBuf );	/// $2 = v2
 
-				wsprintf( pszBuf, _T("%hu"), v3 );
+				_sntprintf( pszBuf, string_size, _T("%hu"), v3 );
 				setuservariable( INST_3, pszBuf );	/// $3 = v3
 
-				wsprintf( pszBuf, _T("%hu"), v4 );
+				_sntprintf( pszBuf, string_size, _T("%hu"), v4 );
 				setuservariable( INST_4, pszBuf );	/// $4 = v4
 
-				wsprintf( pszBuf, _T("%hu.%hu.%hu.%hu"), v1, v2, v3, v4 );
+				_sntprintf( pszBuf, string_size, _T("%hu.%hu.%hu.%hu"), v1, v2, v3, v4 );
 				pushstring( pszBuf );
 
 			} else {

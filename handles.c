@@ -303,8 +303,8 @@ ULONG CloseFileHandlesImpl(
 					TerminateThread( hThread, ERROR_TIMEOUT );
 					///{
 					///	TCHAR szTemp[255];
-					///	wsprintf(
-					///		szTemp,
+					///	_sntprintf(
+					///		szTemp, ARRAYSIZE(szTemp),
 					///		_T( "Timeout\n\ni = %u\npid = %u\nhandle = 0x%x\nflags = 0x%x\naccess = 0x%x" ),
 					///		ctx.i, ctx.HandleInfo->Handles[ctx.i].ProcessId,
 					///		(ULONG)ctx.HandleInfo->Handles[ctx.i].Handle,
