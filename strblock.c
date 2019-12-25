@@ -833,11 +833,17 @@ void __declspec(dllexport) WriteResourceString(
 
 			WORD iBlockId, iStringIndex;
 			HSTRBLOCK hBlock;
+			ULONG iAttr;
 
 			/// Compute the block ID based on the string ID
 			/// Note: The string tables are stored in blocks of 16 stings each.
 			iStringIndex = iStringId % 16;
 			iBlockId = iStringId / 16 + 1;
+
+			/// Temporarily remove R/O file attribute
+			iAttr = GetFileAttributes( szPath );
+			if ((iAttr != INVALID_FILE_ATTRIBUTES) && (iAttr & FILE_ATTRIBUTE_READONLY))
+				SetFileAttributes( szPath, iAttr & ~FILE_ATTRIBUTE_READONLY );
 
 			/// Read the string block
 			hBlock = GetStringBlock( szPath, iBlockId, iStringLang );
@@ -857,6 +863,10 @@ void __declspec(dllexport) WriteResourceString(
 
 			/// Destroy the string block when no longer needed
 			DeleteStringBlock( hBlock );
+
+			/// Restore R/O file attribute
+			if ((iAttr != INVALID_FILE_ATTRIBUTES) && (iAttr & FILE_ATTRIBUTE_READONLY))
+				SetFileAttributes( szPath, iAttr );
 		}
 
 		// Return the result on the stack
