@@ -288,6 +288,10 @@ DWORD ResampleBitmap(
 						DeleteObject( br );
 					}
 
+					/// If the source image has no alpha channel -> force full opacity on destination image
+					if (!bHasAlphaChannel)
+						PrepareBitmapForAlphaBlend( *phBitmap );
+
 					SelectObject( hSrcDC, hOldSrcBitmap );
 					SelectObject( hDstDC, hOldDstBitmap );
 					DeleteDC( hSrcDC );
