@@ -15,10 +15,15 @@ Target ${_TARGET_}
 !include "FileFunc.nsh"
 !include "Win\WinNT.nsh"
 
-# NSutils.dll location
-;!AddPluginDir /x86-ansi      "..\Release-mingw-x86-ansi"
-;!AddPluginDir /x86-unicode   "..\Release-mingw-x86-unicode"
-;!AddPluginDir /amd64-unicode "..\Release-mingw-amd64-unicode"
+# NSutils.dll development location
+!ifdef DEVEL
+!if ! /FileExists "..\Release-mingw-${_TARGET_}\NSutils.dll"
+	!error "Missing \Release-mingw-${_TARGET_}\NSutils.dll"
+!endif
+!AddPluginDir /amd64-unicode "..\Release-mingw-amd64-unicode"
+!AddPluginDir /x86-unicode   "..\Release-mingw-x86-unicode"
+!AddPluginDir /x86-ansi      "..\Release-mingw-x86-ansi"
+!endif
 
 !define /ifndef TRUE 1
 !define /ifndef FALSE 0
