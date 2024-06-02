@@ -506,10 +506,10 @@ void __declspec(dllexport) ExecutePendingFileRenameOperations(
 		// Execute
 		err = ExecutePendingFileRenameOperationsImpl( szSubstring, &fileop_err, szLogFile );
 
-		_sntprintf( pszBuf, string_size, _T("%u"), fileop_err );
+		_sntprintf( pszBuf, string_size, _T("%lu"), fileop_err );
 		pushstring( pszBuf );
 
-		_sntprintf( pszBuf, string_size, _T("%u"), err );
+		_sntprintf( pszBuf, string_size, _T("%lu"), err );
 		pushstring( pszBuf );
 
 		/// Free memory
@@ -1625,10 +1625,10 @@ void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
 		// Execute
 		err = RemoveSoftwareRestrictionPoliciesImpl( szSubstring, KEY_READ|KEY_WRITE|KEY_WOW64_64KEY, szLogFile, &iRemovedCnt );
 
-		_sntprintf( pszBuf, string_size, _T("%u"), iRemovedCnt );
+		_sntprintf( pszBuf, string_size, _T("%lu"), iRemovedCnt );
 		pushstring( pszBuf );
 
-		_sntprintf( pszBuf, string_size, _T("%u"), err );
+		_sntprintf( pszBuf, string_size, _T("%lu"), err );
 		pushstring( pszBuf );
 
 		/// Free memory
