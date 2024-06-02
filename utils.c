@@ -1659,7 +1659,14 @@ BOOL IsSSD( _In_ LPCTSTR pszPath )
 			// (Marius)
 			{
 				STORAGE_PROPERTY_QUERY spq;
-				DEVICE_TRIM_DESCRIPTOR dtr;
+
+			    // DEVICE_TRIM_DESCRIPTOR dtr;
+				struct MY_DEVICE_TRIM_DESCRIPTOR
+				{
+					DWORD Version;
+					DWORD Size;
+					BOOLEAN TrimEnabled;
+				} dtr;
 
 				ZeroMemory( &spq, sizeof( spq ) );
 				ZeroMemory( &dtr, sizeof( dtr ) );
