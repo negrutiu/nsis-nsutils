@@ -26,8 +26,8 @@ libs = Split("""
 """)
 
 examples = Split("""
-	Test/NSutils-Test.nsi
-	Test/NSutils-Test-build.bat
+	test/NSutils-Test.nsi
+	test/NSutils-Test-build.bat
 """)
 
 docs = Split("""
