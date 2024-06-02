@@ -4,8 +4,8 @@
 #include "main.h"
 
 #define COBJMACROS
-#include <OleCtl.h>
-#include <OCIdl.h>
+#include <olectl.h>
+#include <ocidl.h>
 
 int _fltused = 0;			/// For some reason AlphaBlend is using this. The module won't link without it.
 

@@ -2,14 +2,14 @@
 //? Marius Negrutiu (marius.negrutiu@protonmail.com) :: 2013/06/11
 
 #include "main.h"
-#include <CommCtrl.h>
+#include <commctrl.h>
 #include <intrin.h>
 
 
 #define CINTERFACE
 #include <prsht.h>
-#include <GPEdit.h>
-#pragma comment (lib, "GPEdit.lib")
+#include <gpedit.h>
+#pragma comment (lib, "gpedit.lib")
 
 #ifndef PBM_SETSTATE
 	#define PBM_SETSTATE (WM_USER+16)
