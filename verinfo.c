@@ -137,7 +137,7 @@ DWORD ReadVersionInfoString(
 					LPWSTR pszTranslation = NULL;
 					bFound = FindFirstStringFileInfo( &p, NULL, &pszTranslation );
 					if (bFound) {
-						_sntprintf( szTemp, ARRAYSIZE( szTemp ), _T( "\\StringFileInfo\\%ws\\%s" ), pszTranslation, szStringName );
+						_sntprintf( szTemp, ARRAYSIZE( szTemp ), _T( "\\StringFileInfo\\%ls\\%s" ), pszTranslation, szStringName );
 						bFound = VerQueryValue( pRes, szTemp, (LPVOID*)&szValue, &iValueLen );
 					}
 				}
