@@ -2,6 +2,7 @@
 //? Marius Negrutiu (marius.negrutiu@protonmail.com) :: 2013/06/11
 
 #include "main.h"
+#include <winioctl.h>
 #include <commctrl.h>
 #include <intrin.h>
 
@@ -95,7 +96,7 @@ HANDLE LogCreateFile(
 		hFile = CreateFile( pszLogFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, bOverwrite ? CREATE_ALWAYS : OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
 		if ( hFile != INVALID_HANDLE_VALUE ) {
 
-			LARGE_INTEGER iFileSize;
+			ULARGE_INTEGER iFileSize;
 			if ( bOverwrite ||
 				 ((iFileSize.LowPart = GetFileSize( hFile, &iFileSize.HighPart ) != INVALID_FILE_SIZE) && ( iFileSize.QuadPart == 0 )))
 			{
@@ -505,10 +506,10 @@ void __declspec(dllexport) ExecutePendingFileRenameOperations(
 		// Execute
 		err = ExecutePendingFileRenameOperationsImpl( szSubstring, &fileop_err, szLogFile );
 
-		_sntprintf( pszBuf, string_size, _T("%hu"), fileop_err );
+		_sntprintf( pszBuf, string_size, _T("%u"), fileop_err );
 		pushstring( pszBuf );
 
-		_sntprintf( pszBuf, string_size, _T("%hu"), err );
+		_sntprintf( pszBuf, string_size, _T("%u"), err );
 		pushstring( pszBuf );
 
 		/// Free memory
@@ -1624,10 +1625,10 @@ void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
 		// Execute
 		err = RemoveSoftwareRestrictionPoliciesImpl( szSubstring, KEY_READ|KEY_WRITE|KEY_WOW64_64KEY, szLogFile, &iRemovedCnt );
 
-		_sntprintf( pszBuf, string_size, _T("%hu"), iRemovedCnt );
+		_sntprintf( pszBuf, string_size, _T("%u"), iRemovedCnt );
 		pushstring( pszBuf );
 
-		_sntprintf( pszBuf, string_size, _T("%hu"), err );
+		_sntprintf( pszBuf, string_size, _T("%u"), err );
 		pushstring( pszBuf );
 
 		/// Free memory
