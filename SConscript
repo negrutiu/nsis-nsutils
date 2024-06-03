@@ -37,4 +37,4 @@ docs = Split("""
 Import('BuildPlugin')
 
 # NOTE: We'll set cppused = True to link to standard libs (msvcrt.dll)
-BuildPlugin(target, files, libs, examples, docs, res = resources, cppused = True)
+BuildPlugin(target, files, libs, examples, docs, res = resources, cppused = True, defines = ['_NO_CRT_STDIO_INLINE=1'])
