@@ -66,13 +66,15 @@ DWORD LogWriteFile(
 		va_list args;
 
 		va_start(args, pszFormat);
-		iLen = _vsntprintf( szStr, ARRAYSIZE(szStr), pszFormat, args );
-		if ( iLen > 0 ) {
+		iLen = wvsprintf(szStr, pszFormat, args);
+		if ( GetLastError() == ERROR_SUCCESS ) {
 
 			if ( iLen < ARRAYSIZE(szStr))
 				szStr[iLen] = 0;	/// The string is not guaranteed to be null terminated. We'll add the terminator ourselves
 
 			WriteFile( hFile, szStr, iLen * sizeof(TCHAR), &dwWritten, NULL );
+		} else {
+			err = GetLastError();
 		}
 		va_end(args);
 
@@ -506,10 +508,10 @@ void __declspec(dllexport) ExecutePendingFileRenameOperations(
 		// Execute
 		err = ExecutePendingFileRenameOperationsImpl( szSubstring, &fileop_err, szLogFile );
 
-		_sntprintf( pszBuf, string_size, _T("%lu"), fileop_err );
+		wsprintf( pszBuf, _T("%lu"), fileop_err );
 		pushstring( pszBuf );
 
-		_sntprintf( pszBuf, string_size, _T("%lu"), err );
+		wsprintf( pszBuf, _T("%lu"), err );
 		pushstring( pszBuf );
 
 		/// Free memory
@@ -1625,10 +1627,10 @@ void __declspec(dllexport) RemoveSoftwareRestrictionPolicies(
 		// Execute
 		err = RemoveSoftwareRestrictionPoliciesImpl( szSubstring, KEY_READ|KEY_WRITE|KEY_WOW64_64KEY, szLogFile, &iRemovedCnt );
 
-		_sntprintf( pszBuf, string_size, _T("%lu"), iRemovedCnt );
+		wsprintf( pszBuf, _T("%lu"), iRemovedCnt );
 		pushstring( pszBuf );
 
-		_sntprintf( pszBuf, string_size, _T("%lu"), err );
+		wsprintf( pszBuf, _T("%lu"), err );
 		pushstring( pszBuf );
 
 		/// Free memory
@@ -1648,7 +1650,7 @@ BOOL IsSSD( _In_ LPCTSTR pszPath )
 		TCHAR szDisk[20];
 		HANDLE hDisk;
 
-		_sntprintf( szDisk, ARRAYSIZE(szDisk), _T( "\\\\.\\%C:" ), pszPath[0] );
+		wsprintf( szDisk, _T( "\\\\.\\%C:" ), pszPath[0] );
 		hDisk = CreateFile( szDisk, FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL );
 		if (hDisk != INVALID_HANDLE_VALUE) {
 
